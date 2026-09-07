@@ -188,6 +188,7 @@
   .plan-badge.rest { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
   .plan-row .ptitle { font-weight: 600; font-size: 14px; }
   .plan-row .pdetail { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+  .plan-row .pstretch { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
 
   /* Activities */
   .activity-item { border-bottom: 1px solid var(--border); }
@@ -788,10 +789,11 @@
     if (!rows || !rows.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">No plan yet.</div>'; return; }
     el.innerHTML = rows.map(function (r) {
       var type = ['ride', 'gym', 'rest'].indexOf(r.type) !== -1 ? r.type : 'ride';
+      var stretchHtml = r.stretch ? '<div class="pstretch">🧘 ' + escapeHtml(r.stretch) + '</div>' : '';
       return '<div class="plan-row">' +
         '<div class="pdate">' + fmtDate(r.date) + '<span class="pday">' + (r.dayName || '') + '</span></div>' +
         '<div class="plan-badge ' + type + '">' + type + '</div>' +
-        '<div><div class="ptitle">' + escapeHtml(r.title || '') + '</div><div class="pdetail">' + escapeHtml(r.detail || '') + '</div></div>' +
+        '<div><div class="ptitle">' + escapeHtml(r.title || '') + '</div><div class="pdetail">' + escapeHtml(r.detail || '') + '</div>' + stretchHtml + '</div>' +
         '</div>';
     }).join('');
   }
@@ -807,9 +809,10 @@
     var dayList = days.map(function (d) { return d.date + ' (' + d.dayName + ')'; }).join(', ');
     var prompt = "You are a cycling coach planning the next few days for an endurance gravel cyclist who also does occasional gym strength sessions. " +
       "Using the rider's recent training load, recovery trend, and any logged notes below, plan exactly these dates: " + dayList + ". " +
-      "For each date pick ONE session: an easy/endurance ride, an interval/speed ride, a gym strength session, or full rest — mix in rest and gym days where recovery data calls for it, don't default to a ride every day. " +
+      "For each date pick ONE main session: an easy/endurance ride, an interval/speed ride, a gym strength session, or full rest — mix in rest and gym days where recovery data calls for it, don't default to a ride every day. " +
+      "Also include stretching/mobility work on most days as a separate short suggestion — it does not need its own day, it can ride alongside a training day (e.g. post-ride stretch) or be the focus of a rest day (e.g. a longer mobility session); leave it null only on rare days it truly doesn't fit. " +
       'Reply with ONLY a JSON array of ' + days.length + ' objects in date order, each shaped exactly as ' +
-      '{"date":"YYYY-MM-DD","dayName":"Mon","type":"ride"|"gym"|"rest","title":"short session name with duration, e.g. Zone 2 endurance ride, 90 min","detail":"one sentence on why, referencing their data"}.\n\n' +
+      '{"date":"YYYY-MM-DD","dayName":"Mon","type":"ride"|"gym"|"rest","title":"short session name with duration, e.g. Zone 2 endurance ride, 90 min","detail":"one sentence on why, referencing their data","stretch":"short stretching/mobility suggestion with duration, or null"}.\n\n' +
       buildContext();
     var cacheOpt = forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 };
     sampleFn.json(prompt, { modelTier: 'default', cache: cacheOpt }).then(function (rows) {
