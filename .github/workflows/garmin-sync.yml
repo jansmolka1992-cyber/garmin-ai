@@ -2,7 +2,7 @@ name: garmin-sync
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # 06:00 UTC every day
+    - cron: "30 8 * * *"   # 08:30 UTC = 10:30 CEST every day
   workflow_dispatch: {}
 
 permissions:
