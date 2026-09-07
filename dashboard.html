@@ -448,15 +448,46 @@
     return "Velmi nízká — odpočiňte si, nebo jen krátká lehká vyjížďka.";
   }
 
+  // Manual log entries actually move the readiness score, not just a side note.
+  // Rules are intentionally simple and disclosed in the UI, not hidden math.
+  var NOTE_IMPACT = {
+    illness: { cap: 15, label: 'nemoc' },
+    injury: { cap: 15, label: 'zranění' },
+    travel: { penalty: 20, floor: 10, label: 'cestování' }
+  };
+  function applyManualAdjustment(score, notesForDay) {
+    if (score == null) return { score: score, reasons: [] };
+    var adjusted = score;
+    var reasons = [];
+    notesForDay.forEach(function (n) {
+      var rule = NOTE_IMPACT[n.type];
+      if (!rule) return;
+      if (rule.cap != null && adjusted > rule.cap) {
+        adjusted = rule.cap;
+        reasons.push(rule.label);
+      } else if (rule.penalty != null) {
+        var next = Math.max(rule.floor, adjusted - rule.penalty);
+        if (next < adjusted) { adjusted = next; reasons.push(rule.label); }
+      }
+    });
+    return { score: adjusted, reasons: reasons };
+  }
+
   function renderBanner() {
     var w = latestWellness();
-    var score = w ? w.training_readiness : null;
+    var rawScore = w ? w.training_readiness : null;
+    var notesForDay = w ? state.notes.filter(function (n) { return n.date === w.date; }) : [];
+    var adjustment = applyManualAdjustment(rawScore, notesForDay);
+    var score = adjustment.score;
     var status = statusForScore(score);
     document.getElementById('banner').style.setProperty('--stripe', status.color);
     document.getElementById('scoreEl').innerHTML = (score != null ? score : '--') + '<small>/100</small>';
     document.getElementById('levelEl').textContent = w && w.training_readiness_level ? trLevel(w.training_readiness_level) + ' připravenost' : 'Zatím žádné měření';
     document.getElementById('adviceEl').textContent = adviceForScore(score);
-    document.getElementById('feedbackEl').textContent = w && w.training_readiness_feedback ? 'Garmin: ' + trFeedback(w.training_readiness_feedback) : '';
+    var feedbackParts = [];
+    if (w && w.training_readiness_feedback) feedbackParts.push('Garmin: ' + trFeedback(w.training_readiness_feedback));
+    if (adjustment.reasons.length) feedbackParts.push('Upraveno kvůli: ' + adjustment.reasons.join(', ') + ' (Garmin naměřil ' + rawScore + '/100)');
+    document.getElementById('feedbackEl').textContent = feedbackParts.join(' · ');
     document.getElementById('subtitle').textContent = w ? 'Poslední synchronizace ' + fmtDate(w.date) : 'Čekání na první synchronizaci';
 
     // manual entries logged today surface as a banner too
