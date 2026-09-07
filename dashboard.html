@@ -167,7 +167,13 @@
   .summary-stats .stat .lbl {
     font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px;
   }
-  .summary-text { font-size: 14.5px; line-height: 1.65; white-space: pre-wrap; margin-bottom: 14px; color: var(--text); }
+  .summary-text { font-size: 14.5px; line-height: 1.65; margin-bottom: 14px; color: var(--text); }
+  .summary-text p, .bubble.a p { margin: 0 0 10px; }
+  .summary-text p:last-child, .bubble.a p:last-child { margin-bottom: 0; }
+  .summary-text ul, .bubble.a ul { margin: 0 0 10px 18px; padding: 0; }
+  .summary-text ul:last-child, .bubble.a ul:last-child { margin-bottom: 0; }
+  .summary-text li, .bubble.a li { margin-bottom: 4px; }
+  .summary-text strong, .bubble.a strong { color: var(--accent); font-weight: 700; }
   .summary-actions { display: flex; align-items: center; gap: 12px; }
   .summary-actions .hint { color: var(--text-muted); font-size: 12px; }
 
@@ -254,7 +260,7 @@
   .transcript { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
   .bubble { padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5; max-width: 85%; }
   .bubble.q { align-self: flex-end; background: var(--accent-soft); }
-  .bubble.a { align-self: flex-start; background: var(--surface-2); white-space: pre-wrap; }
+  .bubble.a { align-self: flex-start; background: var(--surface-2); }
   .hint { color: var(--text-muted); font-size: 12.5px; margin-top: 10px; }
 
   /* Log form */
@@ -463,6 +469,26 @@
     return String(s).replace(/[&<>"']/g, function (c) {
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
+  }
+
+  // Tiny, safe formatter for Claude's answers: only understands **bold** and
+  // "- " bullet lines. Everything else is escaped plain text — never raw HTML.
+  function inlineFmt(s) {
+    return s.split(/(\*\*[^*]+\*\*)/g).map(function (part) {
+      if (/^\*\*[^*]+\*\*$/.test(part)) return '<strong>' + escapeHtml(part.slice(2, -2)) + '</strong>';
+      return escapeHtml(part);
+    }).join('');
+  }
+  function mdLite(text) {
+    var blocks = String(text || '').split(/\n\s*\n/);
+    return blocks.map(function (block) {
+      var lines = block.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+      if (!lines.length) return '';
+      if (lines.every(function (l) { return /^[-*]\s+/.test(l); })) {
+        return '<ul>' + lines.map(function (l) { return '<li>' + inlineFmt(l.replace(/^[-*]\s+/, '')) + '</li>'; }).join('') + '</ul>';
+      }
+      return '<p>' + inlineFmt(lines.join(' ')) + '</p>';
+    }).join('');
   }
 
   function fmtDateShort(d) {
@@ -755,23 +781,24 @@
       textEl.textContent = "Otevřete tuto stránku na claude.ai, aby se zde zobrazil automatický souhrn — pole pro dotazy níže funguje i tak, jakmile budete přihlášeni.";
       return;
     }
-    textEl.textContent = 'Přemýšlím…';
-    var prompt = "You are a calm, practical cycling coach for an endurance gravel cyclist. Based on the data below, write two short paragraphs, no headers or preamble: " +
-      "(1) a summary of their recent training and its effect (2-3 sentences, cite real numbers), and " +
-      "(2) one concrete recommendation for their next session — intensity, rough duration, and focus. " +
-      "Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
+    textEl.innerHTML = '<p>Přemýšlím…</p>';
+    var prompt = "You are a calm, practical cycling coach for an endurance gravel cyclist. Based on the data below, write a short structured note using EXACTLY this format: " +
+      "a line with the bold label **Nedávný trénink:** followed by a 1-2 sentence summary of their recent training (cite real numbers); " +
+      "then a line with the bold label **Efekt:** followed by 1-2 sentences on what effect it had (aerobic/anaerobic, recovery impact); " +
+      "then a line with the bold label **Co dál:** followed by 1-3 bullet points (each starting with \"- \") giving concrete next-session recommendations (intensity, duration, focus). " +
+      "Do not use markdown headings (#), numbered lists, or any formatting other than **bold** labels and \"- \" bullets. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
     sampleFn(prompt, {
       modelTier: 'default',
       cache: forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 },
-      onText: function (u) { textEl.textContent = u.text; }
+      onText: function (u) { textEl.innerHTML = mdLite(u.text); }
     }).then(function (res) {
-      if (res.truncated) textEl.textContent += '\n\n(zkráceno — pro stručnější verzi klikněte na Obnovit)';
+      if (res.truncated) textEl.innerHTML += '<p>(zkráceno — pro stručnější verzi klikněte na Obnovit)</p>';
     }).catch(function (e) {
-      textEl.textContent = {
+      textEl.innerHTML = '<p>' + escapeHtml({
         not_granted: "Povolte tomuto artefaktu používat Claude, aby se zde zobrazil automatický souhrn — nebo použijte pole pro dotazy níže.",
         rate_limited: "Teď je moc požadavků najednou — zkuste Obnovit za chvíli.",
         sampling_disabled: "Souhrny nejsou pro tento účet dostupné."
-      }[e.code] || "Teď se nepodařilo vygenerovat souhrn — zkuste Obnovit.";
+      }[e.code] || "Teď se nepodařilo vygenerovat souhrn — zkuste Obnovit.") + '</p>';
     });
   }
   document.getElementById('summaryRefreshBtn').addEventListener('click', function () { loadTrainingSummary(true); });
@@ -782,24 +809,24 @@
       textEl.textContent = "Otevřete tuto stránku na claude.ai, aby se zde zobrazilo automatické doporučení ohledně výživy — pole pro dotazy níže funguje i tak, jakmile budete přihlášeni.";
       return;
     }
-    textEl.textContent = 'Přemýšlím…';
+    textEl.innerHTML = '<p>Přemýšlím…</p>';
     var prompt = "You are a practical nutrition advisor for an endurance gravel cyclist. Based on the data below " +
-      "(recent training load, calories burned, current recovery status, and any logged notes such as illness), write two parts, no headers or preamble: " +
-      "(1) general day-to-day nutrition guidance for someone with their training load and current recovery state — meal structure and energy/macronutrient balance across the day, 3-5 sentences; then " +
-      "(2) exactly ONE short paragraph (2-3 sentences) of sport-specific nutrition — fueling before/during/after rides. Keep part 2 brief. " +
-      "Be specific and practical, not generic disclaimers. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
+      "(recent training load, calories burned, current recovery status, and any logged notes such as illness), write a short structured note using EXACTLY this format: " +
+      "a line with the bold label **Denní strava:** followed by 2-4 sentences of general day-to-day nutrition guidance for their training load and current recovery state (meal structure, energy/macronutrient balance); " +
+      "then a line with the bold label **Kolem jízd:** followed by exactly ONE short paragraph (2-3 sentences) of sport-specific fueling before/during/after rides. " +
+      "Do not use markdown headings (#), numbered lists, or any formatting other than **bold** labels. Be specific and practical, not generic disclaimers. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
     sampleFn(prompt, {
       modelTier: 'default',
       cache: forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 },
-      onText: function (u) { textEl.textContent = u.text; }
+      onText: function (u) { textEl.innerHTML = mdLite(u.text); }
     }).then(function (res) {
-      if (res.truncated) textEl.textContent += '\n\n(zkráceno — pro stručnější verzi klikněte na Obnovit)';
+      if (res.truncated) textEl.innerHTML += '<p>(zkráceno — pro stručnější verzi klikněte na Obnovit)</p>';
     }).catch(function (e) {
-      textEl.textContent = {
+      textEl.innerHTML = '<p>' + escapeHtml({
         not_granted: "Povolte tomuto artefaktu používat Claude, aby se zde zobrazilo doporučení ohledně výživy — nebo použijte pole pro dotazy níže.",
         rate_limited: "Teď je moc požadavků najednou — zkuste Obnovit za chvíli.",
         sampling_disabled: "Doporučení ohledně výživy nejsou pro tento účet dostupná."
-      }[e.code] || "Teď se nepodařilo vygenerovat doporučení — zkuste Obnovit.";
+      }[e.code] || "Teď se nepodařilo vygenerovat doporučení — zkuste Obnovit.") + '</p>';
     });
   }
   document.getElementById('nutritionRefreshBtn').addEventListener('click', function () { loadNutrition(true); });
@@ -919,7 +946,7 @@
     var instructions = "You are a calm, practical cycling coach, recovery advisor, and everyday nutrition advisor for an endurance gravel cyclist. " +
       "The rider may ask about training (intensity, recovery, scheduling) or nutrition (what to eat, meal choices like lunch/dinner, hydration, fueling) — answer whichever they ask. " +
       "Use the data below to answer the rider's question directly in 2-5 sentences, citing concrete numbers when useful. " +
-      "If something relevant is missing from the data, say so rather than guessing. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
+      "If something relevant is missing from the data, say so rather than guessing. If the answer has multiple distinct points, you may use **bold** labels and \"- \" bullet lines to make it scannable; for a simple answer plain sentences are fine. Do not use markdown headings (#) or numbered lists. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
 
     var turns = [{ role: 'user', content: instructions }];
     history.forEach(function (h) { turns.push(h); });
@@ -929,7 +956,7 @@
     sampleFn(turns, {
       signal: currentCtl.signal,
       cache: false,
-      onText: function (u) { answerBubble.textContent = u.text; }
+      onText: function (u) { answerBubble.innerHTML = mdLite(u.text); }
     }).then(function (res) {
       history.push({ role: 'user', content: question });
       history.push({ role: 'assistant', content: res.text });
@@ -941,7 +968,7 @@
         rate_limited: "Teď je moc požadavků najednou — zkuste to za chvíli znovu.",
         sampling_disabled: "Dotazování není pro tento účet dostupné.",
       }[e.code] || "Při odpovídání se něco pokazilo — zkuste otázku přeformulovat nebo se zeptejte znovu.";
-      answerBubble.textContent = e.text || msg;
+      answerBubble.innerHTML = mdLite(e.text || msg);
       btn.disabled = false;
     });
   });
