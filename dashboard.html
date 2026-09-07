@@ -132,16 +132,44 @@
   .tile .delta { font-size: 12px; margin-top: 2px; font-weight: 500; }
   .tile .delta.up { color: var(--good); }
   .tile .delta.down { color: var(--critical); }
-  .tile .spark-wrap { margin-top: 8px; }
-  .spark { width: 100%; height: 46px; display: block; overflow: visible; }
-  .spark .hit { cursor: pointer; }
-  .spark .hit:hover + .dot { r: 5; }
-  .spark-empty { color: var(--text-muted); font-size: 12px; height: 46px; display: flex; align-items: center; }
+  .tile .spark-wrap { margin-top: 10px; position: relative; }
+  .spark { width: 100%; height: 58px; display: block; overflow: visible; cursor: crosshair; }
+  .spark-empty { color: var(--text-muted); font-size: 12px; height: 58px; display: flex; align-items: center; }
+  .chart-minmax {
+    position: absolute; right: 0; font-size: 9.5px; color: var(--text-muted);
+    font-family: 'IBM Plex Mono', monospace; pointer-events: none;
+  }
+  .chart-minmax.max { top: -2px; }
+  .chart-minmax.min { top: 46px; }
+  .chart-hover-line {
+    position: absolute; top: 0; height: 58px; width: 1px; background: var(--text-muted);
+    display: none; pointer-events: none;
+  }
+  .chart-tooltip {
+    position: absolute; top: 0; transform: translate(-50%, -100%); background: var(--text); color: var(--bg);
+    font-size: 11px; font-family: 'IBM Plex Mono', monospace; padding: 3px 7px; border-radius: 6px;
+    white-space: nowrap; display: none; pointer-events: none; z-index: 2;
+  }
+  .chart-dates { display: flex; justify-content: space-between; margin-top: 3px; }
+  .chart-dates span { font-size: 10px; color: var(--text-muted); font-family: 'IBM Plex Mono', monospace; }
 
   section { margin-bottom: 32px; }
   h2 {
     font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 19px; margin: 0 0 12px;
   }
+
+  /* Training summary */
+  .summary-box { padding: 20px; }
+  .summary-stats { display: flex; gap: 26px; flex-wrap: wrap; margin-bottom: 16px; }
+  .summary-stats .stat .num {
+    font-family: 'IBM Plex Mono', monospace; font-size: 21px; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  .summary-stats .stat .lbl {
+    font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px;
+  }
+  .summary-text { font-size: 14.5px; line-height: 1.65; white-space: pre-wrap; margin-bottom: 14px; color: var(--text); }
+  .summary-actions { display: flex; align-items: center; gap: 12px; }
+  .summary-actions .hint { color: var(--text-muted); font-size: 12px; }
 
   /* Activities */
   .activity-item { border-bottom: 1px solid var(--border); }
@@ -235,6 +263,17 @@
   <section>
     <h2>Today's numbers</h2>
     <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section>
+    <h2>Training summary</h2>
+    <div class="card summary-box">
+      <div class="summary-stats" id="summaryStats"></div>
+      <div class="summary-text" id="summaryText">Thinking…</div>
+      <div class="summary-actions">
+        <button class="ghost" id="summaryRefreshBtn">Refresh</button>
+      </div>
+    </div>
   </section>
 
   <section>
@@ -356,11 +395,16 @@
     });
   }
 
-  function sparkline(points, color, formatVal) {
-    var width = 260, height = 46;
-    var valid = points.filter(function(p){ return p.value != null; });
-    if (!valid.length) return '<div class="spark-empty">No data yet</div>';
-    var vals = valid.map(function(p){ return p.value; });
+  function fmtDateShort(d) {
+    var parts = d.split('-');
+    return parseInt(parts[1], 10) + '/' + parseInt(parts[2], 10);
+  }
+
+  function chartGeometry(points) {
+    var width = 260, height = 58;
+    var valid = points.filter(function(p) { return p.value != null; });
+    if (!valid.length) return null;
+    var vals = valid.map(function(p) { return p.value; });
     var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
     var pad = (max - min) * 0.2 || Math.max(1, Math.abs(max) * 0.1) || 1;
     var lo = min - pad, hi = max + pad;
@@ -370,16 +414,59 @@
       var y = height - ((p.value - lo) / (hi - lo)) * height;
       return { x: x, y: y, p: p };
     });
+    return { width: width, height: height, xy: xy, min: min, max: max };
+  }
+
+  function sparkline(points, color, formatVal) {
+    var geo = chartGeometry(points);
+    if (!geo) return '<div class="spark-empty">No data yet</div>';
+    var xy = geo.xy;
     var line = xy.map(function(pt, i) { return (i === 0 ? 'M' : 'L') + pt.x.toFixed(1) + ',' + pt.y.toFixed(1); }).join(' ');
-    var area = line + ' L ' + xy[xy.length-1].x.toFixed(1) + ',' + height + ' L ' + xy[0].x.toFixed(1) + ',' + height + ' Z';
-    var circles = xy.map(function(pt) {
-      return '<circle class="hit" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="8" fill="transparent"/>' +
-             '<circle class="dot" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="' + color + '"><title>' + fmtDate(pt.p.date) + ': ' + formatVal(pt.p.value) + '</title></circle>';
+    var area = line + ' L ' + xy[xy.length-1].x.toFixed(1) + ',' + geo.height + ' L ' + xy[0].x.toFixed(1) + ',' + geo.height + ' Z';
+    var dots = xy.map(function(pt) {
+      return '<circle cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="' + color + '"/>';
     }).join('');
-    return '<svg class="spark" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' +
+    var svg = '<svg class="spark" viewBox="0 0 ' + geo.width + ' ' + geo.height + '" preserveAspectRatio="none">' +
       '<path d="' + area + '" fill="' + color + '" opacity="0.14" stroke="none"/>' +
       '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
-      circles + '</svg>';
+      dots + '</svg>';
+    var dateRow = '<div class="chart-dates">' + xy.map(function(pt) {
+      return '<span>' + fmtDateShort(pt.p.date) + '</span>';
+    }).join('') + '</div>';
+    return '<div class="chart-minmax max">' + formatVal(geo.max) + '</div>' +
+      '<div class="chart-minmax min">' + formatVal(geo.min) + '</div>' +
+      svg +
+      '<div class="chart-hover-line"></div><div class="chart-tooltip"></div>' +
+      dateRow;
+  }
+
+  function wireChartHover(wrapEl, points, formatVal) {
+    var geo = chartGeometry(points);
+    var svg = wrapEl.querySelector('.spark');
+    var hoverLine = wrapEl.querySelector('.chart-hover-line');
+    var tooltip = wrapEl.querySelector('.chart-tooltip');
+    if (!geo || !svg || !hoverLine || !tooltip) return;
+    var xy = geo.xy;
+    function show(clientX) {
+      var rect = svg.getBoundingClientRect();
+      var frac = rect.width > 1 ? (clientX - rect.left) / rect.width : 0;
+      frac = Math.max(0, Math.min(1, frac));
+      var idx = xy.length > 1 ? Math.round(frac * (xy.length - 1)) : 0;
+      var pt = xy[idx];
+      var leftPct = (pt.x / geo.width) * 100;
+      hoverLine.style.left = leftPct + '%';
+      hoverLine.style.display = 'block';
+      tooltip.style.left = leftPct + '%';
+      tooltip.style.top = (pt.y - 6) + 'px';
+      tooltip.textContent = fmtDate(pt.p.date) + ': ' + formatVal(pt.p.value);
+      tooltip.style.display = 'block';
+    }
+    function hide() { hoverLine.style.display = 'none'; tooltip.style.display = 'none'; }
+    svg.addEventListener('mousemove', function (e) { show(e.clientX); });
+    svg.addEventListener('mouseleave', hide);
+    svg.addEventListener('touchstart', function (e) { if (e.touches[0]) show(e.touches[0].clientX); }, { passive: true });
+    svg.addEventListener('touchmove', function (e) { if (e.touches[0]) show(e.touches[0].clientX); }, { passive: true });
+    svg.addEventListener('touchend', hide);
   }
 
   var METRICS = [
@@ -410,10 +497,17 @@
         '<div class="label">' + m.label + '</div>' +
         '<div class="value">' + (val != null ? m.fmt(val) : '--') + (m.unit ? '<span class="unit">' + m.unit + '</span>' : '') + '</div>' +
         deltaHtml +
-        '<div class="spark-wrap">' + sparkline(points, m.color, m.fmt) + '</div>' +
+        '<div class="spark-wrap" data-metric="' + m.key + '">' + sparkline(points, m.color, m.fmt) + '</div>' +
         '</div>';
     }).join('');
     document.getElementById('tiles').innerHTML = html;
+    document.querySelectorAll('.spark-wrap').forEach(function (wrapEl) {
+      var key = wrapEl.getAttribute('data-metric');
+      var metric = METRICS.filter(function (m) { return m.key === key; })[0];
+      if (!metric) return;
+      var points = dates.map(function (d) { return { date: d, value: state.wellness[d][metric.key] }; });
+      wireChartHover(wrapEl, points, metric.fmt);
+    });
   }
 
   var ZONE_COLORS = ['#3D8FB0', '#2E9C5B', '#C98A1F', '#C9642A', '#C0392B'];
@@ -475,7 +569,22 @@
     }).join('');
   }
 
-  function renderAll() { renderBanner(); renderTiles(); renderActivities(); renderNotes(); }
+  function renderSummaryStats() {
+    var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+    var cutoffStr = cutoff.toISOString().slice(0, 10);
+    var acts = Object.keys(state.activities).map(function (k) { return state.activities[k]; })
+      .filter(function (a) { return a.date >= cutoffStr; });
+    var totalKm = acts.reduce(function (s, a) { return s + (a.distance_km || 0); }, 0);
+    var totalMin = acts.reduce(function (s, a) { return s + (a.duration_min || 0); }, 0);
+    var totalLoad = acts.reduce(function (s, a) { return s + (a.training_load || 0); }, 0);
+    document.getElementById('summaryStats').innerHTML =
+      '<div class="stat"><div class="num">' + acts.length + '</div><div class="lbl">Rides (7d)</div></div>' +
+      '<div class="stat"><div class="num">' + totalKm.toFixed(0) + ' km</div><div class="lbl">Distance</div></div>' +
+      '<div class="stat"><div class="num">' + (totalMin / 60).toFixed(1) + ' h</div><div class="lbl">Time</div></div>' +
+      '<div class="stat"><div class="num">' + Math.round(totalLoad) + '</div><div class="lbl">Training load</div></div>';
+  }
+
+  function renderAll() { renderBanner(); renderTiles(); renderActivities(); renderNotes(); renderSummaryStats(); }
   renderAll();
 
   document.getElementById('activities').addEventListener('click', function (e) {
@@ -530,7 +639,7 @@
   var history = [];
   var sampleFn = null;
   var currentCtl = null;
-  claude.use('sample').then(function (s) { sampleFn = s; }).catch(function () {});
+  claude.use('sample').then(function (s) { sampleFn = s; loadTrainingSummary(false); }).catch(function () {});
 
   function buildContext() {
     var ds = sortedDates(state.wellness).slice(-7);
@@ -554,6 +663,32 @@
       '\n\nRecent rides:\n' + (aLines || 'none') +
       '\n\nManually logged notes:\n' + (nLines || 'none');
   }
+
+  function loadTrainingSummary(forceRefresh) {
+    var textEl = document.getElementById('summaryText');
+    if (!sampleFn) {
+      textEl.textContent = "Open this page from claude.ai to see an automatic summary here — the Ask box below still works once you're signed in.";
+      return;
+    }
+    textEl.textContent = 'Thinking…';
+    var prompt = "You are a calm, practical cycling coach for an endurance gravel cyclist. Based on the data below, write two short paragraphs, no headers or preamble: " +
+      "(1) a summary of their recent training and its effect (2-3 sentences, cite real numbers), and " +
+      "(2) one concrete recommendation for their next session — intensity, rough duration, and focus.\n\n" + buildContext();
+    sampleFn(prompt, {
+      modelTier: 'default',
+      cache: forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 },
+      onText: function (u) { textEl.textContent = u.text; }
+    }).then(function (res) {
+      if (res.truncated) textEl.textContent += '\n\n(cut short — Refresh for a tighter version)';
+    }).catch(function (e) {
+      textEl.textContent = {
+        not_granted: "Allow this artifact to use Claude to see an automatic summary here — or use the Ask box below instead.",
+        rate_limited: "Too many requests right now — try Refresh again shortly.",
+        sampling_disabled: "Summaries aren't available for this account."
+      }[e.code] || "Couldn't generate a summary right now — try Refresh.";
+    });
+  }
+  document.getElementById('summaryRefreshBtn').addEventListener('click', function () { loadTrainingSummary(true); });
 
   function addBubble(role, text) {
     var t = document.getElementById('transcript');
