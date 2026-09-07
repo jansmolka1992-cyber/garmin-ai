@@ -283,14 +283,14 @@
 </style>
 
 <div class="wrap">
-  <div class="eyebrow">Recovery &amp; Training</div>
-  <h1>Ride Readiness</h1>
-  <div class="subtitle" id="subtitle">Synced from Garmin</div>
+  <div class="eyebrow">Regenerace a trénink</div>
+  <h1>Připravenost k jízdě</h1>
+  <div class="subtitle" id="subtitle">Synchronizováno z Garmin</div>
 
   <div class="card banner" id="banner">
     <div class="score" id="scoreEl">--<small>/100</small></div>
     <div>
-      <div class="level" id="levelEl">Loading…</div>
+      <div class="level" id="levelEl">Načítání…</div>
       <div class="advice" id="adviceEl"></div>
       <div class="feedback" id="feedbackEl"></div>
     </div>
@@ -299,79 +299,79 @@
   <div id="noteBannerSlot"></div>
 
   <section>
-    <h2>Today's numbers</h2>
+    <h2>Dnešní hodnoty</h2>
     <div class="tiles" id="tiles"></div>
   </section>
 
   <section>
-    <h2>Training summary</h2>
+    <h2>Souhrn tréninku</h2>
     <div class="card summary-box">
       <div class="summary-stats" id="summaryStats"></div>
-      <div class="summary-text" id="summaryText">Thinking…</div>
+      <div class="summary-text" id="summaryText">Přemýšlím…</div>
       <div class="summary-actions">
-        <button class="ghost" id="summaryRefreshBtn">Refresh</button>
+        <button class="ghost" id="summaryRefreshBtn">Obnovit</button>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>Upcoming plan</h2>
+    <h2>Plán na další dny</h2>
     <div class="card" id="planBox">
-      <div class="plan-list" id="planList"><div class="empty" style="padding:16px 18px;">Thinking…</div></div>
+      <div class="plan-list" id="planList"><div class="empty" style="padding:16px 18px;">Přemýšlím…</div></div>
       <div class="summary-actions" style="padding: 14px 18px;">
-        <button class="ghost" id="planRefreshBtn">Refresh</button>
+        <button class="ghost" id="planRefreshBtn">Obnovit</button>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>Nutrition</h2>
+    <h2>Výživa</h2>
     <div class="card summary-box">
       <div class="summary-stats" id="nutritionStats"></div>
-      <div class="summary-text" id="nutritionText">Thinking…</div>
+      <div class="summary-text" id="nutritionText">Přemýšlím…</div>
       <div class="summary-actions">
-        <button class="ghost" id="nutritionRefreshBtn">Refresh</button>
+        <button class="ghost" id="nutritionRefreshBtn">Obnovit</button>
       </div>
     </div>
   </section>
 
   <section>
-    <h2>Recent rides</h2>
+    <h2>Poslední jízdy</h2>
     <div class="card" id="activities"></div>
   </section>
 
   <section>
-    <h2>Ask about your training or nutrition</h2>
+    <h2>Zeptejte se na trénink nebo výživu</h2>
     <div class="card ask-box">
       <div class="ask-row">
-        <input type="text" id="askInput" placeholder="e.g. Should I go hard today, or what should I have for lunch?" />
-        <button id="askBtn">Ask</button>
+        <input type="text" id="askInput" placeholder="např. Mám dnes jet naplno, nebo co si dát k obědu?" />
+        <button id="askBtn">Zeptat se</button>
       </div>
-      <div class="hint" id="askHint">Uses your recent data as context. Answers use your own Claude usage.</div>
+      <div class="hint" id="askHint">Používá vaše nedávná data jako kontext. Odpovědi využívají vaše vlastní využití Claude.</div>
       <div class="transcript" id="transcript"></div>
     </div>
   </section>
 
   <section>
-    <h2>Log something</h2>
+    <h2>Přidat záznam</h2>
     <div class="card log-form">
       <div class="row">
         <input type="date" id="logDate" />
         <select id="logType">
-          <option value="illness">Illness</option>
-          <option value="injury">Injury</option>
-          <option value="travel">Travel</option>
-          <option value="rest">Planned rest</option>
-          <option value="note">General note</option>
+          <option value="illness">Nemoc</option>
+          <option value="injury">Zranění</option>
+          <option value="travel">Cestování</option>
+          <option value="rest">Plánovaný odpočinek</option>
+          <option value="note">Obecná poznámka</option>
         </select>
-        <button id="logBtn">Log entry</button>
+        <button id="logBtn">Zaznamenat</button>
       </div>
-      <textarea id="logText" placeholder="e.g. Woke up with a sore throat, skipping today's ride"></textarea>
+      <textarea id="logText" placeholder="např. Ráno bolí v krku, dnešní jízdu vynechávám"></textarea>
       <div class="entries" id="entries"></div>
     </div>
   </section>
 
-  <footer id="footer">Data pulled from your own Garmin account. Nothing here is sent anywhere but your own private artifact.</footer>
+  <footer id="footer">Data pocházejí z vašeho vlastního účtu Garmin. Nic odsud neopouští tento váš soukromý artefakt.</footer>
 </div>
 
 <script>
@@ -403,11 +403,22 @@
   }
   function fmtDate(d) {
     var parts = d.split('-');
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return months[parseInt(parts[1],10)-1] + ' ' + parseInt(parts[2],10);
+    return parseInt(parts[2], 10) + '. ' + parseInt(parts[1], 10) + '.';
   }
   function humanize(s) { return s ? s.replace(/_/g,' ').toLowerCase() : ''; }
   function titleCase(s) { return s ? s.charAt(0) + s.slice(1).toLowerCase() : s; }
+
+  var LEVEL_CS = { POOR: 'Nízká', LOW: 'Nízká', MODERATE: 'Střední', FAIR: 'Průměrná', GOOD: 'Dobrá', HIGH: 'Vysoká', PRIME: 'Vynikající', EXCELLENT: 'Vynikající' };
+  function trLevel(s) { return s && LEVEL_CS[s.toUpperCase()] ? LEVEL_CS[s.toUpperCase()] : titleCase(s); }
+  var FEEDBACK_CS = {
+    LET_YOUR_BODY_RECOVER: 'nechte tělo zregenerovat',
+    TIME_TO_SLOW_DOWN: 'je čas zpomalit',
+    TIME_TO_RECHARGE: 'čas dobít baterky',
+    READY_FOR_ACTION: 'jste připraveni k akci'
+  };
+  function trFeedback(s) { return s ? (FEEDBACK_CS[s] || humanize(s)) : ''; }
+  var NOTE_TYPE_CS = { illness: 'nemoc', injury: 'zranění', travel: 'cestování', rest: 'odpočinek', note: 'poznámka' };
+  function trNoteType(s) { return NOTE_TYPE_CS[s] || s; }
 
   function statusForScore(score) {
     if (score == null) return { color: 'var(--text-muted)', soft: 'var(--surface-2)' };
@@ -417,11 +428,11 @@
     return { color: 'var(--critical)', soft: 'var(--critical-soft)' };
   }
   function adviceForScore(score) {
-    if (score == null) return "No readiness reading yet today.";
-    if (score >= 70) return "Good to push — solid day for a harder ride or intervals.";
-    if (score >= 50) return "Moderate — a steady endurance ride suits today better than intervals.";
-    if (score >= 25) return "Low — keep it easy, or make it an active-recovery spin.";
-    return "Very low — rest, or a short easy spin only.";
+    if (score == null) return "Dnes zatím není žádné měření připravenosti.";
+    if (score >= 70) return "Můžete zabrat — dobrý den na těžší jízdu nebo intervaly.";
+    if (score >= 50) return "Střední — dnes se víc hodí klidná vytrvalostní jízda než intervaly.";
+    if (score >= 25) return "Nízká — jeďte v klidu, nebo zařaďte aktivní regeneraci.";
+    return "Velmi nízká — odpočiňte si, nebo jen krátká lehká vyjížďka.";
   }
 
   function renderBanner() {
@@ -430,10 +441,10 @@
     var status = statusForScore(score);
     document.getElementById('banner').style.setProperty('--stripe', status.color);
     document.getElementById('scoreEl').innerHTML = (score != null ? score : '--') + '<small>/100</small>';
-    document.getElementById('levelEl').textContent = w && w.training_readiness_level ? titleCase(w.training_readiness_level) + ' readiness' : 'No reading yet';
+    document.getElementById('levelEl').textContent = w && w.training_readiness_level ? trLevel(w.training_readiness_level) + ' připravenost' : 'Zatím žádné měření';
     document.getElementById('adviceEl').textContent = adviceForScore(score);
-    document.getElementById('feedbackEl').textContent = w && w.training_readiness_feedback ? 'Garmin: ' + humanize(w.training_readiness_feedback) : '';
-    document.getElementById('subtitle').textContent = w ? 'Last synced ' + fmtDate(w.date) : 'Waiting for first sync';
+    document.getElementById('feedbackEl').textContent = w && w.training_readiness_feedback ? 'Garmin: ' + trFeedback(w.training_readiness_feedback) : '';
+    document.getElementById('subtitle').textContent = w ? 'Poslední synchronizace ' + fmtDate(w.date) : 'Čekání na první synchronizaci';
 
     // manual entries logged today surface as a banner too
     var today = new Date().toISOString().slice(0,10);
@@ -441,7 +452,7 @@
     var slot = document.getElementById('noteBannerSlot');
     if (todays.length) {
       slot.innerHTML = todays.map(function(n){
-        return '<div class="note-banner">⚠️ <div><b>Logged today (' + n.type + ')</b> — ' + escapeHtml(n.text) + '</div></div>';
+        return '<div class="note-banner">⚠️ <div><b>Dnes zaznamenáno (' + trNoteType(n.type) + ')</b> — ' + escapeHtml(n.text) + '</div></div>';
       }).join('');
     } else {
       slot.innerHTML = '';
@@ -456,7 +467,7 @@
 
   function fmtDateShort(d) {
     var parts = d.split('-');
-    return parseInt(parts[1], 10) + '/' + parseInt(parts[2], 10);
+    return parseInt(parts[2], 10) + '.' + parseInt(parts[1], 10) + '.';
   }
 
   function chartGeometry(points) {
@@ -478,7 +489,7 @@
 
   function sparkline(points, color, formatVal) {
     var geo = chartGeometry(points);
-    if (!geo) return '<div class="spark-empty">No data yet</div>';
+    if (!geo) return '<div class="spark-empty">Zatím žádná data</div>';
     var xy = geo.xy;
     var line = xy.map(function(pt, i) { return (i === 0 ? 'M' : 'L') + pt.x.toFixed(1) + ',' + pt.y.toFixed(1); }).join(' ');
     var area = line + ' L ' + xy[xy.length-1].x.toFixed(1) + ',' + geo.height + ' L ' + xy[0].x.toFixed(1) + ',' + geo.height + ' Z';
@@ -529,13 +540,13 @@
   }
 
   var METRICS = [
-    { key: 'hrv_overnight', label: 'HRV (overnight)', unit: 'ms', color: 'var(--accent)', fmt: function(v){ return v; } },
-    { key: 'resting_hr', label: 'Resting HR', unit: 'bpm', color: '#7A5CC7', fmt: function(v){ return v; } },
-    { key: 'sleep_hours', label: 'Sleep', unit: 'h', color: '#3D8FB0', fmt: function(v){ return v.toFixed(1); } },
-    { key: 'sleep_score', label: 'Sleep score', unit: '', color: '#2F8F7A', fmt: function(v){ return v; } },
-    { key: 'body_battery_end', label: 'Body battery (end)', unit: '', color: 'var(--good)', fmt: function(v){ return v; } },
-    { key: 'stress_avg', label: 'Stress (avg)', unit: '', color: 'var(--serious)', fmt: function(v){ return v; } },
-    { key: 'steps', label: 'Steps', unit: '', color: '#5B6864', fmt: function(v){ return v.toLocaleString(); } }
+    { key: 'hrv_overnight', label: 'HRV (přes noc)', unit: 'ms', color: 'var(--accent)', fmt: function(v){ return v; } },
+    { key: 'resting_hr', label: 'Klidová TF', unit: 'bpm', color: '#7A5CC7', fmt: function(v){ return v; } },
+    { key: 'sleep_hours', label: 'Spánek', unit: 'h', color: '#3D8FB0', fmt: function(v){ return v.toFixed(1); } },
+    { key: 'sleep_score', label: 'Skóre spánku', unit: '', color: '#2F8F7A', fmt: function(v){ return v; } },
+    { key: 'body_battery_end', label: 'Body Battery (konec dne)', unit: '', color: 'var(--good)', fmt: function(v){ return v; } },
+    { key: 'stress_avg', label: 'Stres (průměr)', unit: '', color: 'var(--serious)', fmt: function(v){ return v; } },
+    { key: 'steps', label: 'Kroky', unit: '', color: '#5B6864', fmt: function(v){ return v.toLocaleString(); } }
   ];
 
   function renderTiles() {
@@ -550,7 +561,7 @@
         var diff = val - prev[m.key];
         if (Math.abs(diff) > 0.01) {
           var cls = diff > 0 ? 'up' : 'down';
-          deltaHtml = '<div class="delta ' + cls + '">' + (diff > 0 ? '▲' : '▼') + ' ' + Math.abs(diff).toFixed(diff % 1 === 0 ? 0 : 1) + ' vs prev day</div>';
+          deltaHtml = '<div class="delta ' + cls + '">' + (diff > 0 ? '▲' : '▼') + ' ' + Math.abs(diff).toFixed(diff % 1 === 0 ? 0 : 1) + ' oproti předch. dni</div>';
         }
       }
       return '<div class="card tile">' +
@@ -576,7 +587,7 @@
     var acts = Object.keys(state.activities).map(function(k){ return state.activities[k]; })
       .sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0, 8);
     var el = document.getElementById('activities');
-    if (!acts.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">No activities synced yet.</div>'; return; }
+    if (!acts.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">Zatím žádné synchronizované aktivity.</div>'; return; }
     el.innerHTML = acts.map(function(a) {
       var zones = a.hr_zone_minutes || [];
       var hasZones = zones.some(function(z){ return z != null; });
@@ -586,28 +597,28 @@
         return '<div class="zbar" style="height:' + h.toFixed(0) + 'px; background:' + ZONE_COLORS[i] + '"><span>Z' + (i+1) + '</span></div>';
       }).join('');
       var detailRows = [
-        ['Elevation gain', a.elevation_gain_m != null ? Math.round(a.elevation_gain_m) + ' m' : null],
-        ['Elevation loss', a.elevation_loss_m != null ? Math.round(a.elevation_loss_m) + ' m' : null],
-        ['Avg speed', a.avg_speed_kmh != null ? a.avg_speed_kmh + ' km/h' : null],
-        ['Max speed', a.max_speed_kmh != null ? a.max_speed_kmh + ' km/h' : null],
-        ['Avg cadence', a.avg_cadence_rpm != null ? Math.round(a.avg_cadence_rpm) + ' rpm' : null],
-        ['Max HR', a.max_hr != null ? Math.round(a.max_hr) + ' bpm' : null],
-        ['Calories', a.calories != null ? Math.round(a.calories) : null],
-        ['Training load', a.training_load != null ? a.training_load : null],
-        ['Training effect', a.training_effect_label ? a.training_effect_label.replace(/_/g,' ').toLowerCase() : null],
-        ['Temperature', a.min_temp_c != null ? Math.round(a.min_temp_c) + '–' + Math.round(a.max_temp_c) + '°C' : null],
-        ['Location', a.location_name || null]
+        ['Převýšení nahoru', a.elevation_gain_m != null ? Math.round(a.elevation_gain_m) + ' m' : null],
+        ['Převýšení dolů', a.elevation_loss_m != null ? Math.round(a.elevation_loss_m) + ' m' : null],
+        ['Prům. rychlost', a.avg_speed_kmh != null ? a.avg_speed_kmh + ' km/h' : null],
+        ['Max. rychlost', a.max_speed_kmh != null ? a.max_speed_kmh + ' km/h' : null],
+        ['Prům. kadence', a.avg_cadence_rpm != null ? Math.round(a.avg_cadence_rpm) + ' rpm' : null],
+        ['Max. TF', a.max_hr != null ? Math.round(a.max_hr) + ' bpm' : null],
+        ['Kalorie', a.calories != null ? Math.round(a.calories) : null],
+        ['Tréninková zátěž', a.training_load != null ? a.training_load : null],
+        ['Efekt tréninku', a.training_effect_label ? a.training_effect_label.replace(/_/g,' ').toLowerCase() : null],
+        ['Teplota', a.min_temp_c != null ? Math.round(a.min_temp_c) + '–' + Math.round(a.max_temp_c) + '°C' : null],
+        ['Místo', a.location_name || null]
       ].filter(function(r){ return r[1] != null && r[1] !== ''; });
       var detailHtml = '<div class="detail-grid">' + detailRows.map(function(r) {
         return '<div><div class="d-label">' + r[0] + '</div><div class="d-value">' + escapeHtml(String(r[1])) + '</div></div>';
       }).join('') + '</div>';
       if (hasZones) {
-        detailHtml += '<div class="detail-note">Time in HR zones (minutes)</div><div class="zone-bars">' + zoneBars + '</div>';
+        detailHtml += '<div class="detail-note">Čas ve zónách TF (minuty)</div><div class="zone-bars">' + zoneBars + '</div>';
       }
       return '<div class="activity-item">' +
         '<div class="activity-row" data-id="' + a.id + '" aria-expanded="false">' +
         '<div class="date">' + fmtDate(a.date) + '</div>' +
-        '<div><div class="name">' + escapeHtml(a.name || 'Activity') + '</div>' +
+        '<div><div class="name">' + escapeHtml(a.name || 'Aktivita') + '</div>' +
         '<div class="meta">' + escapeHtml((a.type || '').replace(/_/g,' ')) + (a.location_name ? ' · ' + escapeHtml(a.location_name) : '') + '</div></div>' +
         '<div class="stats">' + (a.distance_km != null ? a.distance_km + ' km · ' : '') + (a.duration_min != null ? Math.round(a.duration_min) + ' min' : '') +
         (a.avg_hr != null ? '<br>' + Math.round(a.avg_hr) + ' bpm avg' : '') + '</div>' +
@@ -620,11 +631,11 @@
 
   function renderNotes() {
     var el = document.getElementById('entries');
-    if (!state.notes.length) { el.innerHTML = '<div class="empty">No entries yet — log how you\'re feeling below.</div>'; return; }
+    if (!state.notes.length) { el.innerHTML = '<div class="empty">Zatím žádné záznamy — zapište níže, jak se cítíte.</div>'; return; }
     var sorted = state.notes.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); }).slice(0, 12);
     el.innerHTML = sorted.map(function(n) {
       return '<div class="entry"><span class="edate">' + fmtDate(n.date) + '</span>' +
-        '<span class="badge">' + escapeHtml(n.type) + '</span>' +
+        '<span class="badge">' + escapeHtml(trNoteType(n.type)) + '</span>' +
         '<span>' + escapeHtml(n.text) + '</span></div>';
     }).join('');
   }
@@ -638,10 +649,10 @@
     var totalMin = acts.reduce(function (s, a) { return s + (a.duration_min || 0); }, 0);
     var totalLoad = acts.reduce(function (s, a) { return s + (a.training_load || 0); }, 0);
     document.getElementById('summaryStats').innerHTML =
-      '<div class="stat"><div class="num">' + acts.length + '</div><div class="lbl">Rides (7d)</div></div>' +
-      '<div class="stat"><div class="num">' + totalKm.toFixed(0) + ' km</div><div class="lbl">Distance</div></div>' +
-      '<div class="stat"><div class="num">' + (totalMin / 60).toFixed(1) + ' h</div><div class="lbl">Time</div></div>' +
-      '<div class="stat"><div class="num">' + Math.round(totalLoad) + '</div><div class="lbl">Training load</div></div>';
+      '<div class="stat"><div class="num">' + acts.length + '</div><div class="lbl">Jízdy (7 dní)</div></div>' +
+      '<div class="stat"><div class="num">' + totalKm.toFixed(0) + ' km</div><div class="lbl">Vzdálenost</div></div>' +
+      '<div class="stat"><div class="num">' + (totalMin / 60).toFixed(1) + ' h</div><div class="lbl">Čas</div></div>' +
+      '<div class="stat"><div class="num">' + Math.round(totalLoad) + '</div><div class="lbl">Tréninková zátěž</div></div>';
   }
 
   function renderNutritionStats() {
@@ -653,9 +664,9 @@
     var totalElev = acts.reduce(function (s, a) { return s + (a.elevation_gain_m || 0); }, 0);
     var longestMin = acts.reduce(function (s, a) { return Math.max(s, a.duration_min || 0); }, 0);
     document.getElementById('nutritionStats').innerHTML =
-      '<div class="stat"><div class="num">' + Math.round(totalCal).toLocaleString() + '</div><div class="lbl">Calories burned (7d)</div></div>' +
-      '<div class="stat"><div class="num">' + Math.round(totalElev) + ' m</div><div class="lbl">Elevation climbed (7d)</div></div>' +
-      '<div class="stat"><div class="num">' + (longestMin / 60).toFixed(1) + ' h</div><div class="lbl">Longest ride</div></div>';
+      '<div class="stat"><div class="num">' + Math.round(totalCal).toLocaleString() + '</div><div class="lbl">Spálené kalorie (7 dní)</div></div>' +
+      '<div class="stat"><div class="num">' + Math.round(totalElev) + ' m</div><div class="lbl">Nastoupané převýšení (7 dní)</div></div>' +
+      '<div class="stat"><div class="num">' + (longestMin / 60).toFixed(1) + ' h</div><div class="lbl">Nejdelší jízda</div></div>';
   }
 
   function renderAll() { renderBanner(); renderTiles(); renderActivities(); renderNotes(); renderSummaryStats(); renderNutritionStats(); }
@@ -741,25 +752,26 @@
   function loadTrainingSummary(forceRefresh) {
     var textEl = document.getElementById('summaryText');
     if (!sampleFn) {
-      textEl.textContent = "Open this page from claude.ai to see an automatic summary here — the Ask box below still works once you're signed in.";
+      textEl.textContent = "Otevřete tuto stránku na claude.ai, aby se zde zobrazil automatický souhrn — pole pro dotazy níže funguje i tak, jakmile budete přihlášeni.";
       return;
     }
-    textEl.textContent = 'Thinking…';
+    textEl.textContent = 'Přemýšlím…';
     var prompt = "You are a calm, practical cycling coach for an endurance gravel cyclist. Based on the data below, write two short paragraphs, no headers or preamble: " +
       "(1) a summary of their recent training and its effect (2-3 sentences, cite real numbers), and " +
-      "(2) one concrete recommendation for their next session — intensity, rough duration, and focus.\n\n" + buildContext();
+      "(2) one concrete recommendation for their next session — intensity, rough duration, and focus. " +
+      "Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
     sampleFn(prompt, {
       modelTier: 'default',
       cache: forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 },
       onText: function (u) { textEl.textContent = u.text; }
     }).then(function (res) {
-      if (res.truncated) textEl.textContent += '\n\n(cut short — Refresh for a tighter version)';
+      if (res.truncated) textEl.textContent += '\n\n(zkráceno — pro stručnější verzi klikněte na Obnovit)';
     }).catch(function (e) {
       textEl.textContent = {
-        not_granted: "Allow this artifact to use Claude to see an automatic summary here — or use the Ask box below instead.",
-        rate_limited: "Too many requests right now — try Refresh again shortly.",
-        sampling_disabled: "Summaries aren't available for this account."
-      }[e.code] || "Couldn't generate a summary right now — try Refresh.";
+        not_granted: "Povolte tomuto artefaktu používat Claude, aby se zde zobrazil automatický souhrn — nebo použijte pole pro dotazy níže.",
+        rate_limited: "Teď je moc požadavků najednou — zkuste Obnovit za chvíli.",
+        sampling_disabled: "Souhrny nejsou pro tento účet dostupné."
+      }[e.code] || "Teď se nepodařilo vygenerovat souhrn — zkuste Obnovit.";
     });
   }
   document.getElementById('summaryRefreshBtn').addEventListener('click', function () { loadTrainingSummary(true); });
@@ -767,27 +779,27 @@
   function loadNutrition(forceRefresh) {
     var textEl = document.getElementById('nutritionText');
     if (!sampleFn) {
-      textEl.textContent = "Open this page from claude.ai to see automatic nutrition guidance here — the Ask box below still works once you're signed in.";
+      textEl.textContent = "Otevřete tuto stránku na claude.ai, aby se zde zobrazilo automatické doporučení ohledně výživy — pole pro dotazy níže funguje i tak, jakmile budete přihlášeni.";
       return;
     }
-    textEl.textContent = 'Thinking…';
+    textEl.textContent = 'Přemýšlím…';
     var prompt = "You are a practical nutrition advisor for an endurance gravel cyclist. Based on the data below " +
       "(recent training load, calories burned, current recovery status, and any logged notes such as illness), write two parts, no headers or preamble: " +
       "(1) general day-to-day nutrition guidance for someone with their training load and current recovery state — meal structure and energy/macronutrient balance across the day, 3-5 sentences; then " +
       "(2) exactly ONE short paragraph (2-3 sentences) of sport-specific nutrition — fueling before/during/after rides. Keep part 2 brief. " +
-      "Be specific and practical, not generic disclaimers.\n\n" + buildContext();
+      "Be specific and practical, not generic disclaimers. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
     sampleFn(prompt, {
       modelTier: 'default',
       cache: forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 },
       onText: function (u) { textEl.textContent = u.text; }
     }).then(function (res) {
-      if (res.truncated) textEl.textContent += '\n\n(cut short — Refresh for a tighter version)';
+      if (res.truncated) textEl.textContent += '\n\n(zkráceno — pro stručnější verzi klikněte na Obnovit)';
     }).catch(function (e) {
       textEl.textContent = {
-        not_granted: "Allow this artifact to use Claude to see automatic nutrition guidance here — or use the Ask box below instead.",
-        rate_limited: "Too many requests right now — try Refresh again shortly.",
-        sampling_disabled: "Nutrition guidance isn't available for this account."
-      }[e.code] || "Couldn't generate nutrition guidance right now — try Refresh.";
+        not_granted: "Povolte tomuto artefaktu používat Claude, aby se zde zobrazilo doporučení ohledně výživy — nebo použijte pole pro dotazy níže.",
+        rate_limited: "Teď je moc požadavků najednou — zkuste Obnovit za chvíli.",
+        sampling_disabled: "Doporučení ohledně výživy nejsou pro tento účet dostupná."
+      }[e.code] || "Teď se nepodařilo vygenerovat doporučení — zkuste Obnovit.";
     });
   }
   document.getElementById('nutritionRefreshBtn').addEventListener('click', function () { loadNutrition(true); });
@@ -798,36 +810,39 @@
       var d = new Date();
       d.setDate(d.getDate() + i);
       var iso = d.toISOString().slice(0, 10);
-      var dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      var dayName = d.toLocaleDateString('cs-CZ', { weekday: 'short' });
+      dayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
       out.push({ date: iso, dayName: dayName });
     }
     return out;
   }
 
+  var PLAN_TYPE_CS = { ride: 'Jízda', gym: 'Posilovna', rest: 'Odpočinek' };
+
   function renderPlan(rows) {
     var el = document.getElementById('planList');
-    if (!rows || !rows.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">No plan yet.</div>'; return; }
+    if (!rows || !rows.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">Zatím žádný plán.</div>'; return; }
     el.innerHTML = rows.map(function (r, i) {
       var type = ['ride', 'gym', 'rest'].indexOf(r.type) !== -1 ? r.type : 'ride';
       var stretchHtml = r.stretch ? '<div class="pstretch">🧘 ' + escapeHtml(r.stretch) + '</div>' : '';
       var steps = Array.isArray(r.steps) ? r.steps : [];
       var stepsHtml = steps.length
-        ? '<div class="step-table"><div class="step-head"><div>Step</div><div>Duration</div><div>Target</div></div>' +
+        ? '<div class="step-table"><div class="step-head"><div>Krok</div><div>Doba trvání</div><div>Cíl</div></div>' +
           steps.map(function (s) {
             return '<div class="step-row"><div class="sname">' + escapeHtml(s.name || '') + '</div>' +
               '<div class="sdur">' + escapeHtml(s.duration || '') + '</div>' +
               '<div class="starget">' + escapeHtml(s.target || '') + '</div></div>';
           }).join('') + '</div>'
-        : '<div class="empty">No step breakdown for this day.</div>';
+        : '<div class="empty">Pro tento den není k dispozici rozpis kroků.</div>';
       return '<div class="plan-item">' +
         '<div class="plan-row" data-idx="' + i + '" aria-expanded="false">' +
         '<div class="pdate">' + fmtDate(r.date) + '<span class="pday">' + (r.dayName || '') + '</span></div>' +
-        '<div class="plan-badge ' + type + '">' + type + '</div>' +
+        '<div class="plan-badge ' + type + '">' + PLAN_TYPE_CS[type] + '</div>' +
         '<div><div class="ptitle">' + escapeHtml(r.title || '') + '</div><div class="pdetail">' + escapeHtml(r.detail || '') + '</div>' + stretchHtml + '</div>' +
         '<div class="chevron">▶</div>' +
         '</div>' +
         '<div class="plan-detail" id="plandetail-' + i + '" hidden>' + stepsHtml +
-        '<div class="garmin-tip">To load this on your Edge or Fenix 8: open Garmin Connect → Training → Workouts → Create a Workout, add each step above with its duration and target (heart rate zone, power, or RPE), save, then send it to your device.</div>' +
+        '<div class="garmin-tip">Pro nahrání do Edge nebo Fenix 8: otevřete Garmin Connect → Trénink → Tréninky → Vytvořit trénink, přidejte jednotlivé kroky výše s dobou trvání a cílem (tepová zóna, výkon nebo RPE), uložte a odešlete do zařízení.</div>' +
         '</div>' +
         '</div>';
     }).join('');
@@ -836,10 +851,10 @@
   function loadPlan(forceRefresh) {
     var el = document.getElementById('planList');
     if (!sampleFn) {
-      el.innerHTML = '<div class="empty" style="padding:16px 18px;">Open this page from claude.ai to see a generated plan here — the Ask box below still works once you\'re signed in.</div>';
+      el.innerHTML = '<div class="empty" style="padding:16px 18px;">Otevřete tuto stránku na claude.ai, aby se zde zobrazil vygenerovaný plán — pole pro dotazy níže funguje i tak, jakmile budete přihlášeni.</div>';
       return;
     }
-    el.innerHTML = '<div class="empty" style="padding:16px 18px;">Thinking…</div>';
+    el.innerHTML = '<div class="empty" style="padding:16px 18px;">Přemýšlím…</div>';
     var days = nextDates(5);
     var dayList = days.map(function (d) { return d.date + ' (' + d.dayName + ')'; }).join(', ');
     var prompt = "You are a cycling coach planning the next few days for an endurance gravel cyclist who also does occasional gym strength sessions, using a Garmin Edge (bike computer) and a Fenix 8 (watch). " +
@@ -847,20 +862,21 @@
       "For each date pick ONE main session: an easy/endurance ride, an interval/speed ride, a gym strength session, or full rest — mix in rest and gym days where recovery data calls for it, don't default to a ride every day. " +
       "Also include stretching/mobility work on most days as a separate short suggestion — it does not need its own day, it can ride alongside a training day (e.g. post-ride stretch) or be the focus of a rest day (e.g. a longer mobility session); leave it null only on rare days it truly doesn't fit. " +
       "For each day also break the main session into a short list of structured steps the rider could enter as a Garmin Connect workout (warm-up / main set or intervals / cooldown for rides; exercises with sets x reps for gym; a short routine for a stretch-focused rest day) — 3 to 6 steps, each with a duration (time, distance, or reps) and a target (heart rate zone, power/RPE, cadence, or 'easy'/'moderate' effort as appropriate). " +
+      "Write all text content (title, detail, stretch, and step name/target values) in Czech (česky), naturally and fluently. Keep the \"type\" field as the literal English word ride, gym, or rest, and copy \"dayName\" exactly as given in the date list above. " +
       'Reply with ONLY a JSON array of ' + days.length + ' objects in date order, each shaped exactly as ' +
-      '{"date":"YYYY-MM-DD","dayName":"Mon","type":"ride"|"gym"|"rest","title":"short session name with duration, e.g. Zone 2 endurance ride, 90 min","detail":"one sentence on why, referencing their data","stretch":"short stretching/mobility suggestion with duration, or null",' +
-      '"steps":[{"name":"step name, e.g. Warm-up or Back squat","duration":"e.g. 10 min or 3x8","target":"e.g. Zone 2 HR or RPE 7"}]}.\n\n' +
+      '{"date":"YYYY-MM-DD","dayName":"Po","type":"ride"|"gym"|"rest","title":"short session name with duration, in Czech","detail":"one sentence on why, in Czech, referencing their data","stretch":"short stretching/mobility suggestion with duration, in Czech, or null",' +
+      '"steps":[{"name":"step name in Czech, e.g. Rozcvička or Dřep s činkou","duration":"e.g. 10 min or 3x8","target":"e.g. Zóna 2 TF or RPE 7"}]}.\n\n' +
       buildContext();
     var cacheOpt = forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 };
     sampleFn.json(prompt, { modelTier: 'default', cache: cacheOpt }).then(function (rows) {
       renderPlan(Array.isArray(rows) ? rows : []);
     }).catch(function (e) {
       var msg = {
-        not_granted: "Allow this artifact to use Claude to see a generated plan here — or use the Ask box below instead.",
-        rate_limited: "Too many requests right now — try Refresh again shortly.",
-        sampling_disabled: "Plan generation isn't available for this account.",
-        invalid_json: "Couldn't parse a plan that time — try Refresh."
-      }[e.code] || "Couldn't generate a plan right now — try Refresh.";
+        not_granted: "Povolte tomuto artefaktu používat Claude, aby se zde zobrazil vygenerovaný plán — nebo použijte pole pro dotazy níže.",
+        rate_limited: "Teď je moc požadavků najednou — zkuste Obnovit za chvíli.",
+        sampling_disabled: "Generování plánu není pro tento účet dostupné.",
+        invalid_json: "Tentokrát se nepodařilo plán zpracovat — zkuste Obnovit."
+      }[e.code] || "Teď se nepodařilo vygenerovat plán — zkuste Obnovit.";
       el.innerHTML = '<div class="empty" style="padding:16px 18px;">' + escapeHtml(msg) + '</div>';
     });
   }
@@ -891,19 +907,19 @@
     var question = input.value.trim();
     if (!question) return;
     if (!sampleFn) {
-      addBubble('assistant', "This feature needs to run inside Claude — open this page from claude.ai to ask questions.");
+      addBubble('assistant', "Tato funkce vyžaduje spuštění uvnitř Claude — otevřete tuto stránku na claude.ai, abyste mohli klást dotazy.");
       return;
     }
     var btn = document.getElementById('askBtn');
     btn.disabled = true;
     input.value = '';
     addBubble('user', question);
-    var answerBubble = addBubble('assistant', 'Thinking…');
+    var answerBubble = addBubble('assistant', 'Přemýšlím…');
 
     var instructions = "You are a calm, practical cycling coach, recovery advisor, and everyday nutrition advisor for an endurance gravel cyclist. " +
       "The rider may ask about training (intensity, recovery, scheduling) or nutrition (what to eat, meal choices like lunch/dinner, hydration, fueling) — answer whichever they ask. " +
       "Use the data below to answer the rider's question directly in 2-5 sentences, citing concrete numbers when useful. " +
-      "If something relevant is missing from the data, say so rather than guessing.\n\n" + buildContext();
+      "If something relevant is missing from the data, say so rather than guessing. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
 
     var turns = [{ role: 'user', content: instructions }];
     history.forEach(function (h) { turns.push(h); });
@@ -921,10 +937,10 @@
       btn.disabled = false;
     }).catch(function (e) {
       var msg = {
-        not_granted: "You declined access, or it's not available here — you can still read the tiles above.",
-        rate_limited: "Too many requests right now — try again in a moment.",
-        sampling_disabled: "Ask-a-question isn't available for this account.",
-      }[e.code] || "Something went wrong answering that — try rephrasing or ask again.";
+        not_granted: "Odmítli jste přístup, nebo zde není dostupný — dlaždice výše si ale můžete stále prohlížet.",
+        rate_limited: "Teď je moc požadavků najednou — zkuste to za chvíli znovu.",
+        sampling_disabled: "Dotazování není pro tento účet dostupné.",
+      }[e.code] || "Při odpovídání se něco pokazilo — zkuste otázku přeformulovat nebo se zeptejte znovu.";
       answerBubble.textContent = e.text || msg;
       btn.disabled = false;
     });
