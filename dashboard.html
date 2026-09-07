@@ -341,10 +341,10 @@
   </section>
 
   <section>
-    <h2>Ask about your training</h2>
+    <h2>Ask about your training or nutrition</h2>
     <div class="card ask-box">
       <div class="ask-row">
-        <input type="text" id="askInput" placeholder="e.g. Should I go hard today, or take it easy?" />
+        <input type="text" id="askInput" placeholder="e.g. Should I go hard today, or what should I have for lunch?" />
         <button id="askBtn">Ask</button>
       </div>
       <div class="hint" id="askHint">Uses your recent data as context. Answers use your own Claude usage.</div>
@@ -532,6 +532,7 @@
     { key: 'hrv_overnight', label: 'HRV (overnight)', unit: 'ms', color: 'var(--accent)', fmt: function(v){ return v; } },
     { key: 'resting_hr', label: 'Resting HR', unit: 'bpm', color: '#7A5CC7', fmt: function(v){ return v; } },
     { key: 'sleep_hours', label: 'Sleep', unit: 'h', color: '#3D8FB0', fmt: function(v){ return v.toFixed(1); } },
+    { key: 'sleep_score', label: 'Sleep score', unit: '', color: '#2F8F7A', fmt: function(v){ return v; } },
     { key: 'body_battery_end', label: 'Body battery (end)', unit: '', color: 'var(--good)', fmt: function(v){ return v; } },
     { key: 'stress_avg', label: 'Stress (avg)', unit: '', color: 'var(--serious)', fmt: function(v){ return v; } },
     { key: 'steps', label: 'Steps', unit: '', color: '#5B6864', fmt: function(v){ return v.toLocaleString(); } }
@@ -899,7 +900,8 @@
     addBubble('user', question);
     var answerBubble = addBubble('assistant', 'Thinking…');
 
-    var instructions = "You are a calm, practical cycling coach and recovery advisor for an endurance gravel cyclist. " +
+    var instructions = "You are a calm, practical cycling coach, recovery advisor, and everyday nutrition advisor for an endurance gravel cyclist. " +
+      "The rider may ask about training (intensity, recovery, scheduling) or nutrition (what to eat, meal choices like lunch/dinner, hydration, fueling) — answer whichever they ask. " +
       "Use the data below to answer the rider's question directly in 2-5 sentences, citing concrete numbers when useful. " +
       "If something relevant is missing from the data, say so rather than guessing.\n\n" + buildContext();
 
