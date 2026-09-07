@@ -171,6 +171,24 @@
   .summary-actions { display: flex; align-items: center; gap: 12px; }
   .summary-actions .hint { color: var(--text-muted); font-size: 12px; }
 
+  /* Upcoming plan */
+  .plan-row {
+    display: grid; grid-template-columns: 90px 100px 1fr; gap: 14px; align-items: start;
+    padding: 14px 18px; border-bottom: 1px solid var(--border);
+  }
+  .plan-row:last-child { border-bottom: none; }
+  .plan-row .pdate { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
+  .plan-row .pdate .pday { display: block; color: var(--text-muted); font-size: 11px; margin-top: 1px; }
+  .plan-badge {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 3px 9px; border-radius: 20px; text-align: center; white-space: nowrap; height: fit-content;
+  }
+  .plan-badge.ride { background: var(--accent-soft); color: var(--accent); }
+  .plan-badge.gym { background: rgba(122,92,199,0.14); color: #7A5CC7; }
+  .plan-badge.rest { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+  .plan-row .ptitle { font-weight: 600; font-size: 14px; }
+  .plan-row .pdetail { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+
   /* Activities */
   .activity-item { border-bottom: 1px solid var(--border); }
   .activity-item:last-child { border-bottom: none; }
@@ -272,6 +290,16 @@
       <div class="summary-text" id="summaryText">Thinking…</div>
       <div class="summary-actions">
         <button class="ghost" id="summaryRefreshBtn">Refresh</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Upcoming plan</h2>
+    <div class="card" id="planBox">
+      <div class="plan-list" id="planList"><div class="empty" style="padding:16px 18px;">Thinking…</div></div>
+      <div class="summary-actions" style="padding: 14px 18px;">
+        <button class="ghost" id="planRefreshBtn">Refresh</button>
       </div>
     </div>
   </section>
@@ -664,7 +692,7 @@
   var history = [];
   var sampleFn = null;
   var currentCtl = null;
-  claude.use('sample').then(function (s) { sampleFn = s; loadTrainingSummary(false); loadNutrition(false); }).catch(function () {});
+  claude.use('sample').then(function (s) { sampleFn = s; loadTrainingSummary(false); loadNutrition(false); loadPlan(false); }).catch(function () {});
 
   function buildContext() {
     var ds = sortedDates(state.wellness).slice(-7);
@@ -742,6 +770,61 @@
     });
   }
   document.getElementById('nutritionRefreshBtn').addEventListener('click', function () { loadNutrition(true); });
+
+  function nextDates(n) {
+    var out = [];
+    for (var i = 1; i <= n; i++) {
+      var d = new Date();
+      d.setDate(d.getDate() + i);
+      var iso = d.toISOString().slice(0, 10);
+      var dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+      out.push({ date: iso, dayName: dayName });
+    }
+    return out;
+  }
+
+  function renderPlan(rows) {
+    var el = document.getElementById('planList');
+    if (!rows || !rows.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">No plan yet.</div>'; return; }
+    el.innerHTML = rows.map(function (r) {
+      var type = ['ride', 'gym', 'rest'].indexOf(r.type) !== -1 ? r.type : 'ride';
+      return '<div class="plan-row">' +
+        '<div class="pdate">' + fmtDate(r.date) + '<span class="pday">' + (r.dayName || '') + '</span></div>' +
+        '<div class="plan-badge ' + type + '">' + type + '</div>' +
+        '<div><div class="ptitle">' + escapeHtml(r.title || '') + '</div><div class="pdetail">' + escapeHtml(r.detail || '') + '</div></div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function loadPlan(forceRefresh) {
+    var el = document.getElementById('planList');
+    if (!sampleFn) {
+      el.innerHTML = '<div class="empty" style="padding:16px 18px;">Open this page from claude.ai to see a generated plan here — the Ask box below still works once you\'re signed in.</div>';
+      return;
+    }
+    el.innerHTML = '<div class="empty" style="padding:16px 18px;">Thinking…</div>';
+    var days = nextDates(5);
+    var dayList = days.map(function (d) { return d.date + ' (' + d.dayName + ')'; }).join(', ');
+    var prompt = "You are a cycling coach planning the next few days for an endurance gravel cyclist who also does occasional gym strength sessions. " +
+      "Using the rider's recent training load, recovery trend, and any logged notes below, plan exactly these dates: " + dayList + ". " +
+      "For each date pick ONE session: an easy/endurance ride, an interval/speed ride, a gym strength session, or full rest — mix in rest and gym days where recovery data calls for it, don't default to a ride every day. " +
+      'Reply with ONLY a JSON array of ' + days.length + ' objects in date order, each shaped exactly as ' +
+      '{"date":"YYYY-MM-DD","dayName":"Mon","type":"ride"|"gym"|"rest","title":"short session name with duration, e.g. Zone 2 endurance ride, 90 min","detail":"one sentence on why, referencing their data"}.\n\n' +
+      buildContext();
+    var cacheOpt = forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 };
+    sampleFn.json(prompt, { modelTier: 'default', cache: cacheOpt }).then(function (rows) {
+      renderPlan(Array.isArray(rows) ? rows : []);
+    }).catch(function (e) {
+      var msg = {
+        not_granted: "Allow this artifact to use Claude to see a generated plan here — or use the Ask box below instead.",
+        rate_limited: "Too many requests right now — try Refresh again shortly.",
+        sampling_disabled: "Plan generation isn't available for this account.",
+        invalid_json: "Couldn't parse a plan that time — try Refresh."
+      }[e.code] || "Couldn't generate a plan right now — try Refresh.";
+      el.innerHTML = '<div class="empty" style="padding:16px 18px;">' + escapeHtml(msg) + '</div>';
+    });
+  }
+  document.getElementById('planRefreshBtn').addEventListener('click', function () { loadPlan(true); });
 
   function addBubble(role, text) {
     var t = document.getElementById('transcript');
