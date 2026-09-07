@@ -448,46 +448,15 @@
     return "Velmi nízká — odpočiňte si, nebo jen krátká lehká vyjížďka.";
   }
 
-  // Manual log entries actually move the readiness score, not just a side note.
-  // Rules are intentionally simple and disclosed in the UI, not hidden math.
-  var NOTE_IMPACT = {
-    illness: { cap: 15, label: 'nemoc' },
-    injury: { cap: 15, label: 'zranění' },
-    travel: { penalty: 20, floor: 10, label: 'cestování' }
-  };
-  function applyManualAdjustment(score, notesForDay) {
-    if (score == null) return { score: score, reasons: [] };
-    var adjusted = score;
-    var reasons = [];
-    notesForDay.forEach(function (n) {
-      var rule = NOTE_IMPACT[n.type];
-      if (!rule) return;
-      if (rule.cap != null && adjusted > rule.cap) {
-        adjusted = rule.cap;
-        reasons.push(rule.label);
-      } else if (rule.penalty != null) {
-        var next = Math.max(rule.floor, adjusted - rule.penalty);
-        if (next < adjusted) { adjusted = next; reasons.push(rule.label); }
-      }
-    });
-    return { score: adjusted, reasons: reasons };
-  }
-
   function renderBanner() {
     var w = latestWellness();
-    var rawScore = w ? w.training_readiness : null;
-    var notesForDay = w ? state.notes.filter(function (n) { return n.date === w.date; }) : [];
-    var adjustment = applyManualAdjustment(rawScore, notesForDay);
-    var score = adjustment.score;
+    var score = w ? w.training_readiness : null;
     var status = statusForScore(score);
     document.getElementById('banner').style.setProperty('--stripe', status.color);
     document.getElementById('scoreEl').innerHTML = (score != null ? score : '--') + '<small>/100</small>';
     document.getElementById('levelEl').textContent = w && w.training_readiness_level ? trLevel(w.training_readiness_level) + ' připravenost' : 'Zatím žádné měření';
     document.getElementById('adviceEl').textContent = adviceForScore(score);
-    var feedbackParts = [];
-    if (w && w.training_readiness_feedback) feedbackParts.push('Garmin: ' + trFeedback(w.training_readiness_feedback));
-    if (adjustment.reasons.length) feedbackParts.push('Upraveno kvůli: ' + adjustment.reasons.join(', ') + ' (Garmin naměřil ' + rawScore + '/100)');
-    document.getElementById('feedbackEl').textContent = feedbackParts.join(' · ');
+    document.getElementById('feedbackEl').textContent = w && w.training_readiness_feedback ? 'Garmin: ' + trFeedback(w.training_readiness_feedback) : '';
     document.getElementById('subtitle').textContent = w ? 'Poslední synchronizace ' + fmtDate(w.date) : 'Čekání na první synchronizaci';
 
     // manual entries logged today surface as a banner too
@@ -876,7 +845,8 @@
     var prompt = "You are a calm, practical cycling coach for an endurance gravel cyclist. Based on the data below, write a short structured note using EXACTLY this format: " +
       "a line with the bold label **Nedávný trénink:** followed by a 1-2 sentence summary of their recent training (cite real numbers); " +
       "then a line with the bold label **Efekt:** followed by 1-2 sentences on what effect it had (aerobic/anaerobic, recovery impact); " +
-      "then a line with the bold label **Co dál:** followed by 1-3 bullet points (each starting with \"- \") giving concrete next-session recommendations (intensity, duration, focus). " +
+      "then, ONLY IF the 'Manually logged notes' data below is non-empty, a line with the bold label **Zaznamenané události:** followed by one bullet per logged note (each starting with \"- \", format: date — type — text, briefly) — omit this whole section if there are no logged notes; " +
+      "then a line with the bold label **Co dál:** followed by 1-3 bullet points (each starting with \"- \") giving concrete next-session recommendations (intensity, duration, focus) — if there were logged events like illness, injury or travel, the recommendation MUST explicitly account for them (e.g. suggest easing off or resting because of the illness), not just repeat generic advice. " +
       "Do not use markdown headings (#), numbered lists, or any formatting other than **bold** labels and \"- \" bullets. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
     sampleFn(prompt, {
       modelTier: 'default',
@@ -903,7 +873,7 @@
     textEl.innerHTML = '<p>Přemýšlím…</p>';
     var prompt = "You are a practical nutrition advisor for an endurance gravel cyclist. Based on the data below " +
       "(recent training load, calories burned, current recovery status, and any logged notes such as illness), write a short structured note using EXACTLY this format: " +
-      "a line with the bold label **Denní strava:** followed by 2-4 sentences of general day-to-day nutrition guidance for their training load and current recovery state (meal structure, energy/macronutrient balance); " +
+      "a line with the bold label **Denní strava:** followed by 2-4 sentences of general day-to-day nutrition guidance for their training load and current recovery state (meal structure, energy/macronutrient balance) — if the logged notes mention illness, injury, or travel, explicitly adjust this guidance for it (e.g. easier-to-digest food and extra hydration when sick) and say so; " +
       "then a line with the bold label **Kolem jízd:** followed by exactly ONE short paragraph (2-3 sentences) of sport-specific fueling before/during/after rides. " +
       "Do not use markdown headings (#), numbered lists, or any formatting other than **bold** labels. Be specific and practical, not generic disclaimers. Respond in Czech (česky), naturally and fluently.\n\n" + buildContext();
     sampleFn(prompt, {
