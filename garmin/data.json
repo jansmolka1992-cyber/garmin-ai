@@ -1,0 +1,87 @@
+{
+  "wellness": {
+    "2026-09-07": {
+      "date": "2026-09-07",
+      "resting_hr": 51,
+      "steps": 3547,
+      "stress_avg": 29,
+      "sleep_hours": 6.5,
+      "sleep_score": 70,
+      "hrv_overnight": 52,
+      "body_battery_start": 5,
+      "body_battery_end": 27,
+      "training_readiness": 1,
+      "training_readiness_level": "POOR",
+      "training_readiness_feedback": "LET_YOUR_BODY_RECOVER"
+    },
+    "2026-09-06": {
+      "date": "2026-09-06",
+      "resting_hr": 52,
+      "steps": 2067,
+      "stress_avg": 63,
+      "sleep_hours": 8.3,
+      "sleep_score": 50,
+      "hrv_overnight": 24,
+      "body_battery_start": 5,
+      "body_battery_end": 5,
+      "training_readiness": 1,
+      "training_readiness_level": "POOR",
+      "training_readiness_feedback": "TIME_TO_SLOW_DOWN"
+    },
+    "2026-09-05": {
+      "date": "2026-09-05",
+      "resting_hr": 52,
+      "steps": 9607,
+      "stress_avg": 52,
+      "sleep_hours": 7.1,
+      "sleep_score": 53,
+      "hrv_overnight": 29,
+      "body_battery_start": 6,
+      "body_battery_end": 5,
+      "training_readiness": 1,
+      "training_readiness_level": "POOR",
+      "training_readiness_feedback": "TIME_TO_RECHARGE"
+    }
+  },
+  "activities": {
+    "24274955343": {
+      "id": 24274955343,
+      "name": "Prague Gravel/Unpaved Cycling",
+      "type": "gravel_cycling",
+      "date": "2026-09-07",
+      "start_time": "2026-09-07 18:05:51",
+      "duration_min": 108.8,
+      "distance_km": 52.36,
+      "avg_hr": 122.0,
+      "max_hr": 163.0,
+      "calories": 1052.0,
+      "avg_pace_min_per_km": null
+    },
+    "24263265901": {
+      "id": 24263265901,
+      "name": "Prague Gravel/Unpaved Cycling",
+      "type": "gravel_cycling",
+      "date": "2026-09-06",
+      "start_time": "2026-09-06 17:47:23",
+      "duration_min": 114.1,
+      "distance_km": 51.16,
+      "avg_hr": 131.0,
+      "max_hr": 184.0,
+      "calories": 1223.0,
+      "avg_pace_min_per_km": null
+    },
+    "24239082827": {
+      "id": 24239082827,
+      "name": "Prague Gravel/Unpaved Cycling",
+      "type": "gravel_cycling",
+      "date": "2026-09-04",
+      "start_time": "2026-09-04 15:29:39",
+      "duration_min": 188.0,
+      "distance_km": 80.01,
+      "avg_hr": 137.0,
+      "max_hr": 198.0,
+      "calories": 2309.0,
+      "avg_pace_min_per_km": null
+    }
+  }
+}

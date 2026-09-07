@@ -1,0 +1,35 @@
+name: garmin-sync
+
+on:
+  schedule:
+    - cron: "0 6 * * *"   # 06:00 UTC every day
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Pull Garmin data
+        env:
+          GARMIN_TOKEN_B64: ${{ secrets.GARMIN_TOKEN_B64 }}
+        run: python sync_garmin.py --days 3 --sink files --out ./garmin
+
+      - name: Commit and push updated data
+        run: |
+          git config user.name "garmin-sync-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add garmin/
+          git diff --cached --quiet || git commit -m "Update Garmin data"
+          git push
