@@ -722,10 +722,10 @@
       return;
     }
     textEl.textContent = 'Thinking…';
-    var prompt = "You are a practical sports nutrition advisor for an endurance gravel cyclist. Based on the data below " +
-      "(recent training load, calories burned, current recovery status, and any logged notes such as illness), write two short paragraphs, no headers or preamble: " +
-      "(1) 2-3 sentences on their fueling needs given the recent training load and recovery state, and " +
-      "(2) concrete, practical recommendations covering hydration, carb intake around long rides, and recovery nutrition (protein/carb timing). " +
+    var prompt = "You are a practical nutrition advisor for an endurance gravel cyclist. Based on the data below " +
+      "(recent training load, calories burned, current recovery status, and any logged notes such as illness), write two parts, no headers or preamble: " +
+      "(1) general day-to-day nutrition guidance for someone with their training load and current recovery state — meal structure and energy/macronutrient balance across the day, 3-5 sentences; then " +
+      "(2) exactly ONE short paragraph (2-3 sentences) of sport-specific nutrition — fueling before/during/after rides. Keep part 2 brief. " +
       "Be specific and practical, not generic disclaimers.\n\n" + buildContext();
     sampleFn(prompt, {
       modelTier: 'default',
