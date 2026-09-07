@@ -172,11 +172,13 @@
   .summary-actions .hint { color: var(--text-muted); font-size: 12px; }
 
   /* Upcoming plan */
+  .plan-item { border-bottom: 1px solid var(--border); }
+  .plan-item:last-child { border-bottom: none; }
   .plan-row {
-    display: grid; grid-template-columns: 90px 100px 1fr; gap: 14px; align-items: start;
-    padding: 14px 18px; border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 90px 100px 1fr 18px; gap: 14px; align-items: start;
+    padding: 14px 18px; cursor: pointer;
   }
-  .plan-row:last-child { border-bottom: none; }
+  .plan-row:hover { background: var(--surface-2); }
   .plan-row .pdate { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; }
   .plan-row .pdate .pday { display: block; color: var(--text-muted); font-size: 11px; margin-top: 1px; }
   .plan-badge {
@@ -189,6 +191,23 @@
   .plan-row .ptitle { font-weight: 600; font-size: 14px; }
   .plan-row .pdetail { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
   .plan-row .pstretch { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+  .plan-row .chevron { color: var(--text-muted); font-size: 11px; transition: transform 0.15s ease; margin-top: 2px; }
+  .plan-row[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+  .plan-detail { padding: 4px 18px 20px; background: var(--surface-2); }
+  .step-table { border-top: 1px solid var(--border); margin-top: 4px; }
+  .step-head, .step-row {
+    display: grid; grid-template-columns: 1fr 90px 1.3fr; gap: 12px; padding: 7px 0;
+  }
+  .step-head {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .step-row { border-bottom: 1px dashed var(--border); font-size: 13px; }
+  .step-row:last-child { border-bottom: none; }
+  .step-row .sname { font-weight: 600; }
+  .step-row .sdur { font-family: 'IBM Plex Mono', monospace; color: var(--text-muted); }
+  .step-row .starget { color: var(--text-muted); }
+  .garmin-tip { margin-top: 14px; font-size: 12px; color: var(--text-muted); padding: 10px 12px; background: var(--surface); border-radius: 8px; border: 1px solid var(--border); }
 
   /* Activities */
   .activity-item { border-bottom: 1px solid var(--border); }
@@ -787,13 +806,28 @@
   function renderPlan(rows) {
     var el = document.getElementById('planList');
     if (!rows || !rows.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">No plan yet.</div>'; return; }
-    el.innerHTML = rows.map(function (r) {
+    el.innerHTML = rows.map(function (r, i) {
       var type = ['ride', 'gym', 'rest'].indexOf(r.type) !== -1 ? r.type : 'ride';
       var stretchHtml = r.stretch ? '<div class="pstretch">🧘 ' + escapeHtml(r.stretch) + '</div>' : '';
-      return '<div class="plan-row">' +
+      var steps = Array.isArray(r.steps) ? r.steps : [];
+      var stepsHtml = steps.length
+        ? '<div class="step-table"><div class="step-head"><div>Step</div><div>Duration</div><div>Target</div></div>' +
+          steps.map(function (s) {
+            return '<div class="step-row"><div class="sname">' + escapeHtml(s.name || '') + '</div>' +
+              '<div class="sdur">' + escapeHtml(s.duration || '') + '</div>' +
+              '<div class="starget">' + escapeHtml(s.target || '') + '</div></div>';
+          }).join('') + '</div>'
+        : '<div class="empty">No step breakdown for this day.</div>';
+      return '<div class="plan-item">' +
+        '<div class="plan-row" data-idx="' + i + '" aria-expanded="false">' +
         '<div class="pdate">' + fmtDate(r.date) + '<span class="pday">' + (r.dayName || '') + '</span></div>' +
         '<div class="plan-badge ' + type + '">' + type + '</div>' +
         '<div><div class="ptitle">' + escapeHtml(r.title || '') + '</div><div class="pdetail">' + escapeHtml(r.detail || '') + '</div>' + stretchHtml + '</div>' +
+        '<div class="chevron">▶</div>' +
+        '</div>' +
+        '<div class="plan-detail" id="plandetail-' + i + '" hidden>' + stepsHtml +
+        '<div class="garmin-tip">To load this on your Edge or Fenix 8: open Garmin Connect → Training → Workouts → Create a Workout, add each step above with its duration and target (heart rate zone, power, or RPE), save, then send it to your device.</div>' +
+        '</div>' +
         '</div>';
     }).join('');
   }
@@ -807,12 +841,14 @@
     el.innerHTML = '<div class="empty" style="padding:16px 18px;">Thinking…</div>';
     var days = nextDates(5);
     var dayList = days.map(function (d) { return d.date + ' (' + d.dayName + ')'; }).join(', ');
-    var prompt = "You are a cycling coach planning the next few days for an endurance gravel cyclist who also does occasional gym strength sessions. " +
+    var prompt = "You are a cycling coach planning the next few days for an endurance gravel cyclist who also does occasional gym strength sessions, using a Garmin Edge (bike computer) and a Fenix 8 (watch). " +
       "Using the rider's recent training load, recovery trend, and any logged notes below, plan exactly these dates: " + dayList + ". " +
       "For each date pick ONE main session: an easy/endurance ride, an interval/speed ride, a gym strength session, or full rest — mix in rest and gym days where recovery data calls for it, don't default to a ride every day. " +
       "Also include stretching/mobility work on most days as a separate short suggestion — it does not need its own day, it can ride alongside a training day (e.g. post-ride stretch) or be the focus of a rest day (e.g. a longer mobility session); leave it null only on rare days it truly doesn't fit. " +
+      "For each day also break the main session into a short list of structured steps the rider could enter as a Garmin Connect workout (warm-up / main set or intervals / cooldown for rides; exercises with sets x reps for gym; a short routine for a stretch-focused rest day) — 3 to 6 steps, each with a duration (time, distance, or reps) and a target (heart rate zone, power/RPE, cadence, or 'easy'/'moderate' effort as appropriate). " +
       'Reply with ONLY a JSON array of ' + days.length + ' objects in date order, each shaped exactly as ' +
-      '{"date":"YYYY-MM-DD","dayName":"Mon","type":"ride"|"gym"|"rest","title":"short session name with duration, e.g. Zone 2 endurance ride, 90 min","detail":"one sentence on why, referencing their data","stretch":"short stretching/mobility suggestion with duration, or null"}.\n\n' +
+      '{"date":"YYYY-MM-DD","dayName":"Mon","type":"ride"|"gym"|"rest","title":"short session name with duration, e.g. Zone 2 endurance ride, 90 min","detail":"one sentence on why, referencing their data","stretch":"short stretching/mobility suggestion with duration, or null",' +
+      '"steps":[{"name":"step name, e.g. Warm-up or Back squat","duration":"e.g. 10 min or 3x8","target":"e.g. Zone 2 HR or RPE 7"}]}.\n\n' +
       buildContext();
     var cacheOpt = forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 };
     sampleFn.json(prompt, { modelTier: 'default', cache: cacheOpt }).then(function (rows) {
@@ -828,6 +864,17 @@
     });
   }
   document.getElementById('planRefreshBtn').addEventListener('click', function () { loadPlan(true); });
+
+  document.getElementById('planList').addEventListener('click', function (e) {
+    var row = e.target.closest('.plan-row');
+    if (!row) return;
+    var idx = row.getAttribute('data-idx');
+    var detail = document.getElementById('plandetail-' + idx);
+    if (!detail) return;
+    var expanded = row.getAttribute('aria-expanded') === 'true';
+    row.setAttribute('aria-expanded', String(!expanded));
+    detail.hidden = expanded;
+  });
 
   function addBubble(role, text) {
     var t = document.getElementById('transcript');
