@@ -277,6 +277,17 @@
   </section>
 
   <section>
+    <h2>Nutrition</h2>
+    <div class="card summary-box">
+      <div class="summary-stats" id="nutritionStats"></div>
+      <div class="summary-text" id="nutritionText">Thinking…</div>
+      <div class="summary-actions">
+        <button class="ghost" id="nutritionRefreshBtn">Refresh</button>
+      </div>
+    </div>
+  </section>
+
+  <section>
     <h2>Recent rides</h2>
     <div class="card" id="activities"></div>
   </section>
@@ -584,7 +595,21 @@
       '<div class="stat"><div class="num">' + Math.round(totalLoad) + '</div><div class="lbl">Training load</div></div>';
   }
 
-  function renderAll() { renderBanner(); renderTiles(); renderActivities(); renderNotes(); renderSummaryStats(); }
+  function renderNutritionStats() {
+    var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+    var cutoffStr = cutoff.toISOString().slice(0, 10);
+    var acts = Object.keys(state.activities).map(function (k) { return state.activities[k]; })
+      .filter(function (a) { return a.date >= cutoffStr; });
+    var totalCal = acts.reduce(function (s, a) { return s + (a.calories || 0); }, 0);
+    var totalElev = acts.reduce(function (s, a) { return s + (a.elevation_gain_m || 0); }, 0);
+    var longestMin = acts.reduce(function (s, a) { return Math.max(s, a.duration_min || 0); }, 0);
+    document.getElementById('nutritionStats').innerHTML =
+      '<div class="stat"><div class="num">' + Math.round(totalCal).toLocaleString() + '</div><div class="lbl">Calories burned (7d)</div></div>' +
+      '<div class="stat"><div class="num">' + Math.round(totalElev) + ' m</div><div class="lbl">Elevation climbed (7d)</div></div>' +
+      '<div class="stat"><div class="num">' + (longestMin / 60).toFixed(1) + ' h</div><div class="lbl">Longest ride</div></div>';
+  }
+
+  function renderAll() { renderBanner(); renderTiles(); renderActivities(); renderNotes(); renderSummaryStats(); renderNutritionStats(); }
   renderAll();
 
   document.getElementById('activities').addEventListener('click', function (e) {
@@ -639,7 +664,7 @@
   var history = [];
   var sampleFn = null;
   var currentCtl = null;
-  claude.use('sample').then(function (s) { sampleFn = s; loadTrainingSummary(false); }).catch(function () {});
+  claude.use('sample').then(function (s) { sampleFn = s; loadTrainingSummary(false); loadNutrition(false); }).catch(function () {});
 
   function buildContext() {
     var ds = sortedDates(state.wellness).slice(-7);
@@ -689,6 +714,34 @@
     });
   }
   document.getElementById('summaryRefreshBtn').addEventListener('click', function () { loadTrainingSummary(true); });
+
+  function loadNutrition(forceRefresh) {
+    var textEl = document.getElementById('nutritionText');
+    if (!sampleFn) {
+      textEl.textContent = "Open this page from claude.ai to see automatic nutrition guidance here — the Ask box below still works once you're signed in.";
+      return;
+    }
+    textEl.textContent = 'Thinking…';
+    var prompt = "You are a practical sports nutrition advisor for an endurance gravel cyclist. Based on the data below " +
+      "(recent training load, calories burned, current recovery status, and any logged notes such as illness), write two short paragraphs, no headers or preamble: " +
+      "(1) 2-3 sentences on their fueling needs given the recent training load and recovery state, and " +
+      "(2) concrete, practical recommendations covering hydration, carb intake around long rides, and recovery nutrition (protein/carb timing). " +
+      "Be specific and practical, not generic disclaimers.\n\n" + buildContext();
+    sampleFn(prompt, {
+      modelTier: 'default',
+      cache: forceRefresh ? { gcTime: 86400000, refresh: true } : { gcTime: 86400000 },
+      onText: function (u) { textEl.textContent = u.text; }
+    }).then(function (res) {
+      if (res.truncated) textEl.textContent += '\n\n(cut short — Refresh for a tighter version)';
+    }).catch(function (e) {
+      textEl.textContent = {
+        not_granted: "Allow this artifact to use Claude to see automatic nutrition guidance here — or use the Ask box below instead.",
+        rate_limited: "Too many requests right now — try Refresh again shortly.",
+        sampling_disabled: "Nutrition guidance isn't available for this account."
+      }[e.code] || "Couldn't generate nutrition guidance right now — try Refresh.";
+    });
+  }
+  document.getElementById('nutritionRefreshBtn').addEventListener('click', function () { loadNutrition(true); });
 
   function addBubble(role, text) {
     var t = document.getElementById('transcript');
