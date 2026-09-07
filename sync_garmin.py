@@ -203,6 +203,15 @@ def fetch_activities(garmin, days):
             continue
         if a_date < cutoff:
             continue
+        avg_speed = a.get("averageSpeed")
+        max_speed = a.get("maxSpeed")
+        cadence = _dig(
+            a,
+            "averageBikingCadenceInRevPerMinute",
+            "averageRunningCadenceInStepsPerMinute",
+            "averageSwimCadenceInStrokesPerMinute",
+        )
+        hr_zones = [a.get(f"hrTimeInZone_{i}") for i in range(1, 6)]
         out.append({
             "id": a.get("activityId"),
             "name": a.get("activityName"),
@@ -215,6 +224,21 @@ def fetch_activities(garmin, days):
             "max_hr": a.get("maxHR"),
             "calories": a.get("calories"),
             "avg_pace_min_per_km": None,
+            "elevation_gain_m": a.get("elevationGain"),
+            "elevation_loss_m": a.get("elevationLoss"),
+            "min_elevation_m": a.get("minElevation"),
+            "max_elevation_m": a.get("maxElevation"),
+            "avg_speed_kmh": round(avg_speed * 3.6, 1) if avg_speed else None,
+            "max_speed_kmh": round(max_speed * 3.6, 1) if max_speed else None,
+            "avg_cadence_rpm": cadence,
+            "aerobic_training_effect": round(a["aerobicTrainingEffect"], 1) if a.get("aerobicTrainingEffect") is not None else None,
+            "anaerobic_training_effect": round(a["anaerobicTrainingEffect"], 1) if a.get("anaerobicTrainingEffect") is not None else None,
+            "training_effect_label": a.get("trainingEffectLabel"),
+            "training_load": round(a["activityTrainingLoad"]) if a.get("activityTrainingLoad") is not None else None,
+            "location_name": a.get("locationName"),
+            "min_temp_c": a.get("minTemperature"),
+            "max_temp_c": a.get("maxTemperature"),
+            "hr_zone_minutes": [round(z / 60, 1) if z is not None else None for z in hr_zones],
         })
     return out
 
@@ -264,12 +288,28 @@ def slugify(text):
 
 def render_activity_md(a):
     lines = [f"# {a.get('name') or 'Activity'} ({a.get('type') or 'unknown type'})"]
+    if a.get("location_name"):
+        lines.append(f"- Location: {a['location_name']}")
     lines.append(f"- Date: {a.get('date')} at {a.get('start_time', '')[11:16]}")
     lines.append(f"- Duration: {fmt(a.get('duration_min'), ' min')}")
     lines.append(f"- Distance: {fmt(a.get('distance_km'), ' km')}")
-    lines.append(f"- Avg HR: {fmt(a.get('avg_hr'), ' bpm')}")
-    lines.append(f"- Max HR: {fmt(a.get('max_hr'), ' bpm')}")
+    lines.append(f"- Avg speed: {fmt(a.get('avg_speed_kmh'), ' km/h')} (max {fmt(a.get('max_speed_kmh'), ' km/h')})")
+    lines.append(f"- Elevation gain: {fmt(a.get('elevation_gain_m'), ' m')} (loss {fmt(a.get('elevation_loss_m'), ' m')})")
+    lines.append(f"- Avg HR: {fmt(a.get('avg_hr'), ' bpm')} (max {fmt(a.get('max_hr'), ' bpm')})")
+    lines.append(f"- Avg cadence: {fmt(a.get('avg_cadence_rpm'), ' rpm')}")
     lines.append(f"- Calories: {fmt(a.get('calories'))}")
+    if a.get("training_effect_label"):
+        lines.append(
+            f"- Training effect: {a['training_effect_label'].replace('_', ' ').title()} "
+            f"(aerobic {fmt(a.get('aerobic_training_effect'))}, anaerobic {fmt(a.get('anaerobic_training_effect'))}, "
+            f"load {fmt(a.get('training_load'))})"
+        )
+    if a.get("min_temp_c") is not None:
+        lines.append(f"- Temperature: {a['min_temp_c']}-{a.get('max_temp_c')} C")
+    zones = a.get("hr_zone_minutes")
+    if zones and any(z is not None for z in zones):
+        zone_str = ", ".join(f"Z{i+1} {fmt(z, 'm')}" for i, z in enumerate(zones))
+        lines.append(f"- HR zones: {zone_str}")
     return "\n".join(lines) + "\n"
 
 

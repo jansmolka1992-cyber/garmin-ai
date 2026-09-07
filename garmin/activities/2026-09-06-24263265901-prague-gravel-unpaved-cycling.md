@@ -1,7 +1,12 @@
 # Prague Gravel/Unpaved Cycling (gravel_cycling)
+- Location: Prague
 - Date: 2026-09-06 at 17:47
 - Duration: 114.1 min
 - Distance: 51.16 km
-- Avg HR: 131.0 bpm
-- Max HR: 184.0 bpm
+- Avg speed: 26.9 km/h (max 56.0 km/h)
+- Elevation gain: 459.0 m (loss 473.0 m)
+- Avg HR: 131.0 bpm (max 184.0 bpm)
+- Avg cadence: no data
 - Calories: 1223.0
+- Training effect: Speed (aerobic 3.4, anaerobic 3.5, load 192)
+- HR zones: Z1 7.5m, Z2 37.5m, Z3 39.8m, Z4 23.4m, Z5 3.3m

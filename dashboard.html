@@ -1,0 +1,613 @@
+<title>Ride Readiness</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #F4F7F6;
+    --surface: #FFFFFF;
+    --surface-2: #EAF0EE;
+    --border: #DCE4E2;
+    --text: #16201D;
+    --text-muted: #5B6864;
+    --accent: #2C6E8C;
+    --accent-soft: #DCEAF0;
+    --good: #2E9C5B;
+    --good-soft: #E1F1E7;
+    --warning: #C98A1F;
+    --warning-soft: #F6ECD8;
+    --serious: #C9642A;
+    --serious-soft: #F6E4D8;
+    --critical: #C0392B;
+    --critical-soft: #F6DDD9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0E1414;
+      --surface: #161F1D;
+      --surface-2: #1D2826;
+      --border: #2A3634;
+      --text: #E6EEEC;
+      --text-muted: #93A19D;
+      --accent: #6BB6D6;
+      --accent-soft: rgba(107,182,214,0.16);
+      --good: #4CBE7B;
+      --good-soft: rgba(76,190,123,0.14);
+      --warning: #E0A83B;
+      --warning-soft: rgba(224,168,59,0.14);
+      --serious: #E3854A;
+      --serious-soft: rgba(227,133,74,0.14);
+      --critical: #E2564A;
+      --critical-soft: rgba(226,86,74,0.14);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0E1414;
+    --surface: #161F1D;
+    --surface-2: #1D2826;
+    --border: #2A3634;
+    --text: #E6EEEC;
+    --text-muted: #93A19D;
+    --accent: #6BB6D6;
+    --accent-soft: rgba(107,182,214,0.16);
+    --good: #4CBE7B;
+    --good-soft: rgba(76,190,123,0.14);
+    --warning: #E0A83B;
+    --warning-soft: rgba(224,168,59,0.14);
+    --serious: #E3854A;
+    --serious-soft: rgba(227,133,74,0.14);
+    --critical: #E2564A;
+    --critical-soft: rgba(226,86,74,0.14);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Archivo', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  .eyebrow {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 40px);
+    margin: 4px 0 2px;
+    text-wrap: balance;
+  }
+  .subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 28px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  /* Readiness banner */
+  .banner {
+    display: flex; gap: 24px; align-items: center; padding: 24px;
+    border-left: 6px solid var(--stripe, var(--accent));
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .banner .score {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 44px; font-weight: 600; line-height: 1;
+    color: var(--stripe, var(--accent));
+    min-width: 90px;
+  }
+  .banner .score small { font-size: 16px; color: var(--text-muted); font-weight: 500; }
+  .banner .level {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 20px; margin-bottom: 2px;
+  }
+  .banner .advice { color: var(--text); font-size: 14.5px; max-width: 52ch; }
+  .banner .feedback { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
+  .note-banner {
+    display: flex; gap: 10px; align-items: flex-start; padding: 14px 18px;
+    background: var(--warning-soft); border: 1px solid var(--warning);
+    border-radius: 10px; margin-bottom: 24px; font-size: 13.5px;
+  }
+  .note-banner b { font-weight: 600; }
+
+  /* Tiles grid */
+  .tiles {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px; margin-bottom: 28px;
+  }
+  .tile { padding: 16px 16px 12px; }
+  .tile .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 6px;
+  }
+  .tile .value {
+    font-family: 'IBM Plex Mono', monospace; font-size: 24px; font-weight: 600;
+    font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 6px;
+  }
+  .tile .value .unit { font-size: 12px; color: var(--text-muted); font-weight: 500; font-family: 'Archivo', sans-serif; }
+  .tile .delta { font-size: 12px; margin-top: 2px; font-weight: 500; }
+  .tile .delta.up { color: var(--good); }
+  .tile .delta.down { color: var(--critical); }
+  .tile .spark-wrap { margin-top: 8px; }
+  .spark { width: 100%; height: 46px; display: block; overflow: visible; }
+  .spark .hit { cursor: pointer; }
+  .spark .hit:hover + .dot { r: 5; }
+  .spark-empty { color: var(--text-muted); font-size: 12px; height: 46px; display: flex; align-items: center; }
+
+  section { margin-bottom: 32px; }
+  h2 {
+    font-family: 'Fraunces', Georgia, serif; font-weight: 600; font-size: 19px; margin: 0 0 12px;
+  }
+
+  /* Activities */
+  .activity-item { border-bottom: 1px solid var(--border); }
+  .activity-item:last-child { border-bottom: none; }
+  .activity-row {
+    display: grid; grid-template-columns: 84px 1fr auto 18px; gap: 14px; align-items: center;
+    padding: 14px 18px; cursor: pointer;
+  }
+  .activity-row:hover { background: var(--surface-2); }
+  .activity-row .date { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--text-muted); }
+  .activity-row .name { font-weight: 600; font-size: 14.5px; }
+  .activity-row .meta { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
+  .activity-row .stats { text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  .activity-row .chevron { color: var(--text-muted); font-size: 11px; transition: transform 0.15s ease; }
+  .activity-row[aria-expanded="true"] .chevron { transform: rotate(90deg); }
+  .activity-detail { padding: 4px 18px 18px; background: var(--surface-2); }
+  .detail-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px 20px;
+  }
+  .detail-grid .d-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+  .detail-grid .d-value { font-family: 'IBM Plex Mono', monospace; font-size: 14.5px; margin-top: 2px; }
+  .zone-bars { display: flex; gap: 3px; align-items: flex-end; height: 40px; margin: 8px 0 22px; }
+  .zone-bars .zbar { flex: 1; border-radius: 3px 3px 0 0; position: relative; min-height: 2px; }
+  .zone-bars .zbar span {
+    position: absolute; bottom: -18px; left: 0; right: 0; text-align: center; font-size: 10px; color: var(--text-muted);
+  }
+  .detail-note { margin-top: 20px; font-size: 12px; color: var(--text-muted); }
+
+  /* Ask box */
+  .ask-box { padding: 20px; }
+  .ask-row { display: flex; gap: 8px; }
+  .ask-row input[type=text] {
+    flex: 1; padding: 11px 14px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text); font-size: 14px; font-family: inherit;
+  }
+  .ask-row input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button {
+    font-family: 'Archivo', sans-serif; font-weight: 600; font-size: 13.5px;
+    padding: 11px 18px; border-radius: 9px; border: none; cursor: pointer;
+    background: var(--accent); color: white;
+  }
+  button:disabled { opacity: 0.55; cursor: default; }
+  button.ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .transcript { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .bubble { padding: 12px 14px; border-radius: 10px; font-size: 14px; line-height: 1.5; max-width: 85%; }
+  .bubble.q { align-self: flex-end; background: var(--accent-soft); }
+  .bubble.a { align-self: flex-start; background: var(--surface-2); white-space: pre-wrap; }
+  .hint { color: var(--text-muted); font-size: 12.5px; margin-top: 10px; }
+
+  /* Log form */
+  .log-form { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+  .log-form .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .log-form select, .log-form input[type=date] {
+    padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text); font-family: inherit; font-size: 13.5px;
+  }
+  .log-form textarea {
+    width: 100%; min-height: 64px; padding: 11px 14px; border-radius: 9px; border: 1px solid var(--border);
+    background: var(--surface-2); color: var(--text); font-family: inherit; font-size: 14px; resize: vertical;
+  }
+  .entries { margin-top: 4px; display: flex; flex-direction: column; gap: 8px; }
+  .entry { display: flex; gap: 10px; align-items: baseline; font-size: 13.5px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .entry:last-child { border-bottom: none; }
+  .entry .badge {
+    font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 2px 7px; border-radius: 5px; background: var(--warning-soft); color: var(--warning);
+    white-space: nowrap;
+  }
+  .entry .edate { font-family: 'IBM Plex Mono', monospace; color: var(--text-muted); white-space: nowrap; }
+  .empty { color: var(--text-muted); font-size: 13.5px; padding: 4px 0; }
+
+  footer { color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 40px; }
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Recovery &amp; Training</div>
+  <h1>Ride Readiness</h1>
+  <div class="subtitle" id="subtitle">Synced from Garmin</div>
+
+  <div class="card banner" id="banner">
+    <div class="score" id="scoreEl">--<small>/100</small></div>
+    <div>
+      <div class="level" id="levelEl">Loading…</div>
+      <div class="advice" id="adviceEl"></div>
+      <div class="feedback" id="feedbackEl"></div>
+    </div>
+  </div>
+
+  <div id="noteBannerSlot"></div>
+
+  <section>
+    <h2>Today's numbers</h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section>
+    <h2>Recent rides</h2>
+    <div class="card" id="activities"></div>
+  </section>
+
+  <section>
+    <h2>Ask about your training</h2>
+    <div class="card ask-box">
+      <div class="ask-row">
+        <input type="text" id="askInput" placeholder="e.g. Should I go hard today, or take it easy?" />
+        <button id="askBtn">Ask</button>
+      </div>
+      <div class="hint" id="askHint">Uses your recent data as context. Answers use your own Claude usage.</div>
+      <div class="transcript" id="transcript"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Log something</h2>
+    <div class="card log-form">
+      <div class="row">
+        <input type="date" id="logDate" />
+        <select id="logType">
+          <option value="illness">Illness</option>
+          <option value="injury">Injury</option>
+          <option value="travel">Travel</option>
+          <option value="rest">Planned rest</option>
+          <option value="note">General note</option>
+        </select>
+        <button id="logBtn">Log entry</button>
+      </div>
+      <textarea id="logText" placeholder="e.g. Woke up with a sore throat, skipping today's ride"></textarea>
+      <div class="entries" id="entries"></div>
+    </div>
+  </section>
+
+  <footer id="footer">Data pulled from your own Garmin account. Nothing here is sent anywhere but your own private artifact.</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ---- real data, pulled from this morning's sync (used until live db data arrives) ----
+  var INITIAL = {
+    wellness: {
+      "2026-09-03": {date:"2026-09-03", resting_hr:47, steps:3572, stress_avg:47, sleep_hours:7.9, sleep_score:74, hrv_overnight:36, body_battery_start:28, body_battery_end:12, training_readiness:100, training_readiness_level:"PRIME", training_readiness_feedback:"READY_FOR_ACTION"},
+      "2026-09-04": {date:"2026-09-04", resting_hr:52, steps:3828, stress_avg:41, sleep_hours:7.5, sleep_score:71, hrv_overnight:36, body_battery_start:8, body_battery_end:9, training_readiness:2, training_readiness_level:"POOR", training_readiness_feedback:"LET_YOUR_BODY_RECOVER"},
+      "2026-09-05": {date:"2026-09-05", resting_hr:52, steps:9607, stress_avg:52, sleep_hours:7.1, sleep_score:53, hrv_overnight:29, body_battery_start:6, body_battery_end:5, training_readiness:1, training_readiness_level:"POOR", training_readiness_feedback:"TIME_TO_RECHARGE"},
+      "2026-09-06": {date:"2026-09-06", resting_hr:52, steps:2067, stress_avg:63, sleep_hours:8.3, sleep_score:50, hrv_overnight:24, body_battery_start:5, body_battery_end:5, training_readiness:1, training_readiness_level:"POOR", training_readiness_feedback:"TIME_TO_SLOW_DOWN"},
+      "2026-09-07": {date:"2026-09-07", resting_hr:51, steps:3547, stress_avg:29, sleep_hours:6.5, sleep_score:70, hrv_overnight:52, body_battery_start:5, body_battery_end:27, training_readiness:1, training_readiness_level:"POOR", training_readiness_feedback:"LET_YOUR_BODY_RECOVER"}
+    },
+    activities: {
+      "24239082827": {id:24239082827, name:"Prague Gravel/Unpaved Cycling", type:"gravel_cycling", date:"2026-09-04", start_time:"2026-09-04 15:29:39", duration_min:188.0, distance_km:80.01, avg_hr:137.0, max_hr:198.0, calories:2309.0, elevation_gain_m:942.0, elevation_loss_m:988.0, avg_speed_kmh:25.5, max_speed_kmh:57.6, avg_cadence_rpm:null, aerobic_training_effect:4.2, anaerobic_training_effect:3.8, training_effect_label:"SPEED", training_load:280, location_name:"Prague", min_temp_c:null, max_temp_c:null, hr_zone_minutes:[8.7,35.1,69.9,66.8,4.8]},
+      "24263265901": {id:24263265901, name:"Prague Gravel/Unpaved Cycling", type:"gravel_cycling", date:"2026-09-06", start_time:"2026-09-06 17:47:23", duration_min:114.1, distance_km:51.16, avg_hr:131.0, max_hr:184.0, calories:1223.0, elevation_gain_m:459.0, elevation_loss_m:473.0, avg_speed_kmh:26.9, max_speed_kmh:56.0, avg_cadence_rpm:null, aerobic_training_effect:3.4, anaerobic_training_effect:3.5, training_effect_label:"SPEED", training_load:192, location_name:"Prague", min_temp_c:null, max_temp_c:null, hr_zone_minutes:[7.5,37.5,39.8,23.4,3.3]},
+      "24274955343": {id:24274955343, name:"Prague Gravel/Unpaved Cycling", type:"gravel_cycling", date:"2026-09-07", start_time:"2026-09-07 18:05:51", duration_min:108.8, distance_km:52.36, avg_hr:122.0, max_hr:163.0, calories:1052.0, elevation_gain_m:344.0, elevation_loss_m:360.0, avg_speed_kmh:28.9, max_speed_kmh:62.2, avg_cadence_rpm:76.0, aerobic_training_effect:2.7, anaerobic_training_effect:1.1, training_effect_label:"AEROBIC_BASE", training_load:62, location_name:"Prague", min_temp_c:18.0, max_temp_c:26.0, hr_zone_minutes:[8.4,31.6,34.9,26.0,7.7]}
+    }
+  };
+
+  var state = { wellness: Object.assign({}, INITIAL.wellness), activities: Object.assign({}, INITIAL.activities), notes: [] };
+
+  function sortedDates(obj) { return Object.keys(obj).sort(); }
+  function latestWellness() {
+    var ds = sortedDates(state.wellness);
+    return ds.length ? state.wellness[ds[ds.length - 1]] : null;
+  }
+  function fmtDate(d) {
+    var parts = d.split('-');
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[parseInt(parts[1],10)-1] + ' ' + parseInt(parts[2],10);
+  }
+  function humanize(s) { return s ? s.replace(/_/g,' ').toLowerCase() : ''; }
+  function titleCase(s) { return s ? s.charAt(0) + s.slice(1).toLowerCase() : s; }
+
+  function statusForScore(score) {
+    if (score == null) return { color: 'var(--text-muted)', soft: 'var(--surface-2)' };
+    if (score >= 70) return { color: 'var(--good)', soft: 'var(--good-soft)' };
+    if (score >= 50) return { color: 'var(--warning)', soft: 'var(--warning-soft)' };
+    if (score >= 25) return { color: 'var(--serious)', soft: 'var(--serious-soft)' };
+    return { color: 'var(--critical)', soft: 'var(--critical-soft)' };
+  }
+  function adviceForScore(score) {
+    if (score == null) return "No readiness reading yet today.";
+    if (score >= 70) return "Good to push — solid day for a harder ride or intervals.";
+    if (score >= 50) return "Moderate — a steady endurance ride suits today better than intervals.";
+    if (score >= 25) return "Low — keep it easy, or make it an active-recovery spin.";
+    return "Very low — rest, or a short easy spin only.";
+  }
+
+  function renderBanner() {
+    var w = latestWellness();
+    var score = w ? w.training_readiness : null;
+    var status = statusForScore(score);
+    document.getElementById('banner').style.setProperty('--stripe', status.color);
+    document.getElementById('scoreEl').innerHTML = (score != null ? score : '--') + '<small>/100</small>';
+    document.getElementById('levelEl').textContent = w && w.training_readiness_level ? titleCase(w.training_readiness_level) + ' readiness' : 'No reading yet';
+    document.getElementById('adviceEl').textContent = adviceForScore(score);
+    document.getElementById('feedbackEl').textContent = w && w.training_readiness_feedback ? 'Garmin: ' + humanize(w.training_readiness_feedback) : '';
+    document.getElementById('subtitle').textContent = w ? 'Last synced ' + fmtDate(w.date) : 'Waiting for first sync';
+
+    // manual entries logged today surface as a banner too
+    var today = new Date().toISOString().slice(0,10);
+    var todays = state.notes.filter(function(n){ return n.date === today; });
+    var slot = document.getElementById('noteBannerSlot');
+    if (todays.length) {
+      slot.innerHTML = todays.map(function(n){
+        return '<div class="note-banner">⚠️ <div><b>Logged today (' + n.type + ')</b> — ' + escapeHtml(n.text) + '</div></div>';
+      }).join('');
+    } else {
+      slot.innerHTML = '';
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function sparkline(points, color, formatVal) {
+    var width = 260, height = 46;
+    var valid = points.filter(function(p){ return p.value != null; });
+    if (!valid.length) return '<div class="spark-empty">No data yet</div>';
+    var vals = valid.map(function(p){ return p.value; });
+    var min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
+    var pad = (max - min) * 0.2 || Math.max(1, Math.abs(max) * 0.1) || 1;
+    var lo = min - pad, hi = max + pad;
+    var n = valid.length;
+    var xy = valid.map(function(p, i) {
+      var x = n > 1 ? (i * width / (n - 1)) : width / 2;
+      var y = height - ((p.value - lo) / (hi - lo)) * height;
+      return { x: x, y: y, p: p };
+    });
+    var line = xy.map(function(pt, i) { return (i === 0 ? 'M' : 'L') + pt.x.toFixed(1) + ',' + pt.y.toFixed(1); }).join(' ');
+    var area = line + ' L ' + xy[xy.length-1].x.toFixed(1) + ',' + height + ' L ' + xy[0].x.toFixed(1) + ',' + height + ' Z';
+    var circles = xy.map(function(pt) {
+      return '<circle class="hit" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="8" fill="transparent"/>' +
+             '<circle class="dot" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="' + color + '"><title>' + fmtDate(pt.p.date) + ': ' + formatVal(pt.p.value) + '</title></circle>';
+    }).join('');
+    return '<svg class="spark" viewBox="0 0 ' + width + ' ' + height + '" preserveAspectRatio="none">' +
+      '<path d="' + area + '" fill="' + color + '" opacity="0.14" stroke="none"/>' +
+      '<path d="' + line + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+      circles + '</svg>';
+  }
+
+  var METRICS = [
+    { key: 'hrv_overnight', label: 'HRV (overnight)', unit: 'ms', color: 'var(--accent)', fmt: function(v){ return v; } },
+    { key: 'resting_hr', label: 'Resting HR', unit: 'bpm', color: '#7A5CC7', fmt: function(v){ return v; } },
+    { key: 'sleep_hours', label: 'Sleep', unit: 'h', color: '#3D8FB0', fmt: function(v){ return v.toFixed(1); } },
+    { key: 'body_battery_end', label: 'Body battery (end)', unit: '', color: 'var(--good)', fmt: function(v){ return v; } },
+    { key: 'stress_avg', label: 'Stress (avg)', unit: '', color: 'var(--serious)', fmt: function(v){ return v; } },
+    { key: 'steps', label: 'Steps', unit: '', color: '#5B6864', fmt: function(v){ return v.toLocaleString(); } }
+  ];
+
+  function renderTiles() {
+    var dates = sortedDates(state.wellness);
+    var latest = dates.length ? state.wellness[dates[dates.length-1]] : {};
+    var prev = dates.length > 1 ? state.wellness[dates[dates.length-2]] : null;
+    var html = METRICS.map(function(m) {
+      var points = dates.map(function(d) { return { date: d, value: state.wellness[d][m.key] }; });
+      var val = latest ? latest[m.key] : null;
+      var deltaHtml = '';
+      if (prev && val != null && prev[m.key] != null) {
+        var diff = val - prev[m.key];
+        if (Math.abs(diff) > 0.01) {
+          var cls = diff > 0 ? 'up' : 'down';
+          deltaHtml = '<div class="delta ' + cls + '">' + (diff > 0 ? '▲' : '▼') + ' ' + Math.abs(diff).toFixed(diff % 1 === 0 ? 0 : 1) + ' vs prev day</div>';
+        }
+      }
+      return '<div class="card tile">' +
+        '<div class="label">' + m.label + '</div>' +
+        '<div class="value">' + (val != null ? m.fmt(val) : '--') + (m.unit ? '<span class="unit">' + m.unit + '</span>' : '') + '</div>' +
+        deltaHtml +
+        '<div class="spark-wrap">' + sparkline(points, m.color, m.fmt) + '</div>' +
+        '</div>';
+    }).join('');
+    document.getElementById('tiles').innerHTML = html;
+  }
+
+  var ZONE_COLORS = ['#3D8FB0', '#2E9C5B', '#C98A1F', '#C9642A', '#C0392B'];
+
+  function renderActivities() {
+    var acts = Object.keys(state.activities).map(function(k){ return state.activities[k]; })
+      .sort(function(a,b){ return b.date.localeCompare(a.date); }).slice(0, 8);
+    var el = document.getElementById('activities');
+    if (!acts.length) { el.innerHTML = '<div class="empty" style="padding:16px 18px;">No activities synced yet.</div>'; return; }
+    el.innerHTML = acts.map(function(a) {
+      var zones = a.hr_zone_minutes || [];
+      var hasZones = zones.some(function(z){ return z != null; });
+      var maxZone = Math.max.apply(null, zones.filter(function(z){ return z != null; }).concat([1]));
+      var zoneBars = zones.map(function(z, i) {
+        var h = z != null ? Math.max(2, (z / maxZone) * 40) : 2;
+        return '<div class="zbar" style="height:' + h.toFixed(0) + 'px; background:' + ZONE_COLORS[i] + '"><span>Z' + (i+1) + '</span></div>';
+      }).join('');
+      var detailRows = [
+        ['Elevation gain', a.elevation_gain_m != null ? Math.round(a.elevation_gain_m) + ' m' : null],
+        ['Elevation loss', a.elevation_loss_m != null ? Math.round(a.elevation_loss_m) + ' m' : null],
+        ['Avg speed', a.avg_speed_kmh != null ? a.avg_speed_kmh + ' km/h' : null],
+        ['Max speed', a.max_speed_kmh != null ? a.max_speed_kmh + ' km/h' : null],
+        ['Avg cadence', a.avg_cadence_rpm != null ? Math.round(a.avg_cadence_rpm) + ' rpm' : null],
+        ['Max HR', a.max_hr != null ? Math.round(a.max_hr) + ' bpm' : null],
+        ['Calories', a.calories != null ? Math.round(a.calories) : null],
+        ['Training load', a.training_load != null ? a.training_load : null],
+        ['Training effect', a.training_effect_label ? a.training_effect_label.replace(/_/g,' ').toLowerCase() : null],
+        ['Temperature', a.min_temp_c != null ? Math.round(a.min_temp_c) + '–' + Math.round(a.max_temp_c) + '°C' : null],
+        ['Location', a.location_name || null]
+      ].filter(function(r){ return r[1] != null && r[1] !== ''; });
+      var detailHtml = '<div class="detail-grid">' + detailRows.map(function(r) {
+        return '<div><div class="d-label">' + r[0] + '</div><div class="d-value">' + escapeHtml(String(r[1])) + '</div></div>';
+      }).join('') + '</div>';
+      if (hasZones) {
+        detailHtml += '<div class="detail-note">Time in HR zones (minutes)</div><div class="zone-bars">' + zoneBars + '</div>';
+      }
+      return '<div class="activity-item">' +
+        '<div class="activity-row" data-id="' + a.id + '" aria-expanded="false">' +
+        '<div class="date">' + fmtDate(a.date) + '</div>' +
+        '<div><div class="name">' + escapeHtml(a.name || 'Activity') + '</div>' +
+        '<div class="meta">' + escapeHtml((a.type || '').replace(/_/g,' ')) + (a.location_name ? ' · ' + escapeHtml(a.location_name) : '') + '</div></div>' +
+        '<div class="stats">' + (a.distance_km != null ? a.distance_km + ' km · ' : '') + (a.duration_min != null ? Math.round(a.duration_min) + ' min' : '') +
+        (a.avg_hr != null ? '<br>' + Math.round(a.avg_hr) + ' bpm avg' : '') + '</div>' +
+        '<div class="chevron">▶</div>' +
+        '</div>' +
+        '<div class="activity-detail" id="detail-' + a.id + '" hidden>' + detailHtml + '</div>' +
+        '</div>';
+    }).join('');
+  }
+
+  function renderNotes() {
+    var el = document.getElementById('entries');
+    if (!state.notes.length) { el.innerHTML = '<div class="empty">No entries yet — log how you\'re feeling below.</div>'; return; }
+    var sorted = state.notes.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); }).slice(0, 12);
+    el.innerHTML = sorted.map(function(n) {
+      return '<div class="entry"><span class="edate">' + fmtDate(n.date) + '</span>' +
+        '<span class="badge">' + escapeHtml(n.type) + '</span>' +
+        '<span>' + escapeHtml(n.text) + '</span></div>';
+    }).join('');
+  }
+
+  function renderAll() { renderBanner(); renderTiles(); renderActivities(); renderNotes(); }
+  renderAll();
+
+  document.getElementById('activities').addEventListener('click', function (e) {
+    var row = e.target.closest('.activity-row');
+    if (!row) return;
+    var id = row.getAttribute('data-id');
+    var detail = document.getElementById('detail-' + id);
+    if (!detail) return;
+    var expanded = row.getAttribute('aria-expanded') === 'true';
+    row.setAttribute('aria-expanded', String(!expanded));
+    detail.hidden = expanded;
+  });
+
+  var today = new Date().toISOString().slice(0,10);
+  document.getElementById('logDate').value = today;
+
+  // ---- live data via the db capability ----
+  var dbRef = null;
+  claude.use('db').then(function (db) {
+    if (!db) return;
+    dbRef = db;
+    db.collection('wellness').orderBy('date', 'desc').limit(60).onSnapshot(function (snap) {
+      snap.docs.forEach(function (doc) { if (doc.exists) state.wellness[doc.id] = doc.data(); });
+      renderAll();
+    });
+    db.collection('activities').orderBy('date', 'desc').limit(30).onSnapshot(function (snap) {
+      snap.docs.forEach(function (doc) { if (doc.exists) state.activities[doc.id] = doc.data(); });
+      renderAll();
+    });
+    db.collection('notes').orderBy('date', 'desc').limit(50).onSnapshot(function (snap) {
+      state.notes = snap.docs.filter(function(d){return d.exists;}).map(function (doc) { return doc.data(); });
+      renderAll();
+    });
+  }).catch(function () {});
+
+  // ---- log entry form ----
+  document.getElementById('logBtn').addEventListener('click', function () {
+    var date = document.getElementById('logDate').value || today;
+    var type = document.getElementById('logType').value;
+    var text = document.getElementById('logText').value.trim();
+    if (!text) { document.getElementById('logText').focus(); return; }
+    var entry = { date: date, type: type, text: text, createdAt: new Date().toISOString() };
+    state.notes.push(entry);
+    renderAll();
+    document.getElementById('logText').value = '';
+    if (dbRef) {
+      dbRef.collection('notes').add(entry).catch(function () { /* optimistic UI already applied */ });
+    }
+  });
+
+  // ---- ask assistant ----
+  var history = [];
+  var sampleFn = null;
+  var currentCtl = null;
+  claude.use('sample').then(function (s) { sampleFn = s; }).catch(function () {});
+
+  function buildContext() {
+    var ds = sortedDates(state.wellness).slice(-7);
+    var wLines = ds.map(function (d) {
+      var w = state.wellness[d];
+      return d + ': readiness ' + (w.training_readiness != null ? w.training_readiness + '/100 (' + (w.training_readiness_level||'') + ')' : 'n/a') +
+        ', HRV ' + (w.hrv_overnight != null ? w.hrv_overnight + 'ms' : 'n/a') +
+        ', resting HR ' + (w.resting_hr != null ? w.resting_hr + 'bpm' : 'n/a') +
+        ', sleep ' + (w.sleep_hours != null ? w.sleep_hours + 'h (score ' + w.sleep_score + ')' : 'n/a') +
+        ', body battery ' + (w.body_battery_start != null ? w.body_battery_start + '->' + w.body_battery_end : 'n/a') +
+        ', stress ' + (w.stress_avg != null ? w.stress_avg : 'n/a') +
+        ', steps ' + (w.steps != null ? w.steps : 'n/a');
+    }).join('\n');
+    var acts = Object.keys(state.activities).map(function (k) { return state.activities[k]; })
+      .sort(function (a, b) { return b.date.localeCompare(a.date); }).slice(0, 5);
+    var aLines = acts.map(function (a) {
+      return a.date + ': ' + a.name + ', ' + a.distance_km + 'km, ' + Math.round(a.duration_min) + 'min, avg HR ' + Math.round(a.avg_hr || 0);
+    }).join('\n');
+    var nLines = state.notes.slice(-8).map(function (n) { return n.date + ' [' + n.type + ']: ' + n.text; }).join('\n');
+    return 'Daily wellness (most recent last):\n' + (wLines || 'none') +
+      '\n\nRecent rides:\n' + (aLines || 'none') +
+      '\n\nManually logged notes:\n' + (nLines || 'none');
+  }
+
+  function addBubble(role, text) {
+    var t = document.getElementById('transcript');
+    var b = document.createElement('div');
+    b.className = 'bubble ' + (role === 'user' ? 'q' : 'a');
+    b.textContent = text;
+    t.appendChild(b);
+    return b;
+  }
+
+  document.getElementById('askBtn').addEventListener('click', function () {
+    var input = document.getElementById('askInput');
+    var question = input.value.trim();
+    if (!question) return;
+    if (!sampleFn) {
+      addBubble('assistant', "This feature needs to run inside Claude — open this page from claude.ai to ask questions.");
+      return;
+    }
+    var btn = document.getElementById('askBtn');
+    btn.disabled = true;
+    input.value = '';
+    addBubble('user', question);
+    var answerBubble = addBubble('assistant', 'Thinking…');
+
+    var instructions = "You are a calm, practical cycling coach and recovery advisor for an endurance gravel cyclist. " +
+      "Use the data below to answer the rider's question directly in 2-5 sentences, citing concrete numbers when useful. " +
+      "If something relevant is missing from the data, say so rather than guessing.\n\n" + buildContext();
+
+    var turns = [{ role: 'user', content: instructions }];
+    history.forEach(function (h) { turns.push(h); });
+    turns.push({ role: 'user', content: question });
+
+    currentCtl = new AbortController();
+    sampleFn(turns, {
+      signal: currentCtl.signal,
+      cache: false,
+      onText: function (u) { answerBubble.textContent = u.text; }
+    }).then(function (res) {
+      history.push({ role: 'user', content: question });
+      history.push({ role: 'assistant', content: res.text });
+      if (history.length > 8) history = history.slice(-8);
+      btn.disabled = false;
+    }).catch(function (e) {
+      var msg = {
+        not_granted: "You declined access, or it's not available here — you can still read the tiles above.",
+        rate_limited: "Too many requests right now — try again in a moment.",
+        sampling_disabled: "Ask-a-question isn't available for this account.",
+      }[e.code] || "Something went wrong answering that — try rephrasing or ask again.";
+      answerBubble.textContent = e.text || msg;
+      btn.disabled = false;
+    });
+  });
+  document.getElementById('askInput').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') document.getElementById('askBtn').click();
+  });
+})();
+</script>

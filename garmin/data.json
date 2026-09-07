@@ -41,6 +41,34 @@
       "training_readiness": 1,
       "training_readiness_level": "POOR",
       "training_readiness_feedback": "TIME_TO_RECHARGE"
+    },
+    "2026-09-04": {
+      "date": "2026-09-04",
+      "resting_hr": 52,
+      "steps": 3828,
+      "stress_avg": 41,
+      "sleep_hours": 7.5,
+      "sleep_score": 71,
+      "hrv_overnight": 36,
+      "body_battery_start": 8,
+      "body_battery_end": 9,
+      "training_readiness": 2,
+      "training_readiness_level": "POOR",
+      "training_readiness_feedback": "LET_YOUR_BODY_RECOVER"
+    },
+    "2026-09-03": {
+      "date": "2026-09-03",
+      "resting_hr": 47,
+      "steps": 3572,
+      "stress_avg": 47,
+      "sleep_hours": 7.9,
+      "sleep_score": 74,
+      "hrv_overnight": 36,
+      "body_battery_start": 28,
+      "body_battery_end": 12,
+      "training_readiness": 100,
+      "training_readiness_level": "PRIME",
+      "training_readiness_feedback": "READY_FOR_ACTION"
     }
   },
   "activities": {
@@ -55,7 +83,28 @@
       "avg_hr": 122.0,
       "max_hr": 163.0,
       "calories": 1052.0,
-      "avg_pace_min_per_km": null
+      "avg_pace_min_per_km": null,
+      "elevation_gain_m": 344.0,
+      "elevation_loss_m": 360.0,
+      "min_elevation_m": 192.8000030517578,
+      "max_elevation_m": 385.3999938964844,
+      "avg_speed_kmh": 28.9,
+      "max_speed_kmh": 62.2,
+      "avg_cadence_rpm": 76.0,
+      "aerobic_training_effect": 2.7,
+      "anaerobic_training_effect": 1.1,
+      "training_effect_label": "AEROBIC_BASE",
+      "training_load": 62,
+      "location_name": "Prague",
+      "min_temp_c": 18.0,
+      "max_temp_c": 26.0,
+      "hr_zone_minutes": [
+        8.4,
+        31.6,
+        34.9,
+        26.0,
+        7.7
+      ]
     },
     "24263265901": {
       "id": 24263265901,
@@ -68,7 +117,28 @@
       "avg_hr": 131.0,
       "max_hr": 184.0,
       "calories": 1223.0,
-      "avg_pace_min_per_km": null
+      "avg_pace_min_per_km": null,
+      "elevation_gain_m": 459.0,
+      "elevation_loss_m": 473.0,
+      "min_elevation_m": 187.39999389648438,
+      "max_elevation_m": 369.79998779296875,
+      "avg_speed_kmh": 26.9,
+      "max_speed_kmh": 56.0,
+      "avg_cadence_rpm": null,
+      "aerobic_training_effect": 3.4,
+      "anaerobic_training_effect": 3.5,
+      "training_effect_label": "SPEED",
+      "training_load": 192,
+      "location_name": "Prague",
+      "min_temp_c": null,
+      "max_temp_c": null,
+      "hr_zone_minutes": [
+        7.5,
+        37.5,
+        39.8,
+        23.4,
+        3.3
+      ]
     },
     "24239082827": {
       "id": 24239082827,
@@ -81,7 +151,28 @@
       "avg_hr": 137.0,
       "max_hr": 198.0,
       "calories": 2309.0,
-      "avg_pace_min_per_km": null
+      "avg_pace_min_per_km": null,
+      "elevation_gain_m": 942.0,
+      "elevation_loss_m": 988.0,
+      "min_elevation_m": 174.60000610351562,
+      "max_elevation_m": 313.20001220703125,
+      "avg_speed_kmh": 25.5,
+      "max_speed_kmh": 57.6,
+      "avg_cadence_rpm": null,
+      "aerobic_training_effect": 4.2,
+      "anaerobic_training_effect": 3.8,
+      "training_effect_label": "SPEED",
+      "training_load": 280,
+      "location_name": "Prague",
+      "min_temp_c": null,
+      "max_temp_c": null,
+      "hr_zone_minutes": [
+        8.7,
+        35.1,
+        69.9,
+        66.8,
+        4.8
+      ]
     }
   }
 }
