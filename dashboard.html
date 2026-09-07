@@ -286,6 +286,8 @@
     white-space: nowrap;
   }
   .entry .edate { font-family: 'IBM Plex Mono', monospace; color: var(--text-muted); white-space: nowrap; }
+  .entry .etext { flex: 1; }
+  .entry .entry-edit { margin-left: auto; padding: 3px 10px; font-size: 11px; flex-shrink: 0; }
   .empty { color: var(--text-muted); font-size: 13.5px; padding: 4px 0; }
 
   footer { color: var(--text-muted); font-size: 12px; text-align: center; margin-top: 40px; }
@@ -374,6 +376,7 @@
           <option value="note">Obecná poznámka</option>
         </select>
         <button id="logBtn">Zaznamenat</button>
+        <button class="ghost" id="logCancelBtn" hidden>Zrušit úpravu</button>
       </div>
       <div class="log-hint">Datum jde změnit i zpětně — klidně zapište událost z minulých dnů (např. nemoc, která začala včera).</div>
       <textarea id="logText" placeholder="např. Ráno bolí v krku, dnešní jízdu vynechávám"></textarea>
@@ -666,8 +669,14 @@
     el.innerHTML = sorted.map(function(n) {
       return '<div class="entry"><span class="edate">' + fmtDate(n.date) + '</span>' +
         '<span class="badge">' + escapeHtml(trNoteType(n.type)) + '</span>' +
-        '<span>' + escapeHtml(n.text) + '</span></div>';
+        '<span class="etext">' + escapeHtml(n.text) + '</span>' +
+        (n.id ? '<button class="ghost entry-edit" data-id="' + escapeHtml(n.id) + '">Upravit</button>' : '') +
+        '</div>';
     }).join('');
+  }
+  function findNoteIndexById(id) {
+    for (var i = 0; i < state.notes.length; i++) { if (state.notes[i].id === id) return i; }
+    return -1;
   }
 
   function renderSummaryStats() {
@@ -731,24 +740,70 @@
       renderAll();
     });
     db.collection('notes').orderBy('date', 'desc').limit(50).onSnapshot(function (snap) {
-      state.notes = snap.docs.filter(function(d){return d.exists;}).map(function (doc) { return doc.data(); });
+      state.notes = snap.docs.filter(function(d){return d.exists;}).map(function (doc) {
+        var data = doc.data();
+        if (!data.id) data.id = doc.id;
+        return data;
+      });
       renderAll();
     });
   }).catch(function () {});
 
-  // ---- log entry form ----
+  // ---- log entry form (add + edit) ----
+  var editingNoteId = null;
+
+  function exitEditMode() {
+    editingNoteId = null;
+    document.getElementById('logBtn').textContent = 'Zaznamenat';
+    document.getElementById('logCancelBtn').hidden = true;
+    document.getElementById('logDate').value = today;
+    document.getElementById('logType').value = 'illness';
+    document.getElementById('logText').value = '';
+  }
+
   document.getElementById('logBtn').addEventListener('click', function () {
     var date = document.getElementById('logDate').value || today;
     var type = document.getElementById('logType').value;
     var text = document.getElementById('logText').value.trim();
     if (!text) { document.getElementById('logText').focus(); return; }
-    var entry = { date: date, type: type, text: text, createdAt: new Date().toISOString() };
-    state.notes.push(entry);
-    renderAll();
-    document.getElementById('logText').value = '';
-    if (dbRef) {
-      dbRef.collection('notes').add(entry).catch(function () { /* optimistic UI already applied */ });
+
+    if (editingNoteId) {
+      var idx = findNoteIndexById(editingNoteId);
+      var existing = idx !== -1 ? state.notes[idx] : {};
+      var entry = {
+        id: editingNoteId, date: date, type: type, text: text,
+        createdAt: existing.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      if (idx !== -1) state.notes[idx] = entry; else state.notes.push(entry);
+      if (dbRef) dbRef.collection('notes').doc(editingNoteId).set(entry).catch(function () {});
+      exitEditMode();
+    } else {
+      var id = dbRef ? dbRef.collection('notes').doc().id : 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
+      var newEntry = { id: id, date: date, type: type, text: text, createdAt: new Date().toISOString() };
+      state.notes.push(newEntry);
+      if (dbRef) dbRef.collection('notes').doc(id).set(newEntry).catch(function () {});
+      document.getElementById('logText').value = '';
     }
+    renderAll();
+  });
+
+  document.getElementById('logCancelBtn').addEventListener('click', exitEditMode);
+
+  document.getElementById('entries').addEventListener('click', function (e) {
+    var btn = e.target.closest('.entry-edit');
+    if (!btn) return;
+    var id = btn.getAttribute('data-id');
+    var idx = findNoteIndexById(id);
+    if (idx === -1) return;
+    var n = state.notes[idx];
+    editingNoteId = id;
+    document.getElementById('logDate').value = n.date;
+    document.getElementById('logType').value = n.type;
+    document.getElementById('logText').value = n.text;
+    document.getElementById('logBtn').textContent = 'Uložit změny';
+    document.getElementById('logCancelBtn').hidden = false;
+    document.getElementById('logText').focus();
   });
 
   // ---- ask assistant ----
