@@ -9,7 +9,7 @@
       "sleep_score": 70,
       "hrv_overnight": 52,
       "body_battery_start": 5,
-      "body_battery_end": 27,
+      "body_battery_end": 17,
       "training_readiness": 1,
       "training_readiness_level": "POOR",
       "training_readiness_feedback": "LET_YOUR_BODY_RECOVER"
@@ -69,6 +69,20 @@
       "training_readiness": 100,
       "training_readiness_level": "PRIME",
       "training_readiness_feedback": "READY_FOR_ACTION"
+    },
+    "2026-09-08": {
+      "date": "2026-09-08",
+      "resting_hr": 49,
+      "steps": 109,
+      "stress_avg": 19,
+      "sleep_hours": 6.7,
+      "sleep_score": 60,
+      "hrv_overnight": 61,
+      "body_battery_start": 17,
+      "body_battery_end": 78,
+      "training_readiness": 1,
+      "training_readiness_level": "POOR",
+      "training_readiness_feedback": "TIME_TO_SLOW_DOWN"
     }
   },
   "activities": {
