@@ -452,12 +452,21 @@
     if (score >= 25) return { color: 'var(--serious)', soft: 'var(--serious-soft)' };
     return { color: 'var(--critical)', soft: 'var(--critical-soft)' };
   }
-  function adviceForScore(score) {
+  function csNum(v, decimals) {
+    return v.toFixed(decimals == null ? 0 : decimals).replace('.', ',');
+  }
+  // A short, decisive call — rest or ride — citing the 1-2 numbers that drove it.
+  function readinessVerdict(w) {
+    var score = w ? w.training_readiness : null;
     if (score == null) return "Dnes zatím není žádné měření připravenosti.";
-    if (score >= 70) return "Můžete zabrat — dobrý den na těžší jízdu nebo intervaly.";
-    if (score >= 50) return "Střední — dnes se víc hodí klidná vytrvalostní jízda než intervaly.";
-    if (score >= 25) return "Nízká — jeďte v klidu, nebo zařaďte aktivní regeneraci.";
-    return "Velmi nízká — odpočiňte si, nebo jen krátká lehká vyjížďka.";
+    var isRide = score >= 50;
+    var reasons = [];
+    if (w.hrv_overnight != null) reasons.push('HRV ' + w.hrv_overnight + ' ms');
+    if (w.sleep_hours != null) reasons.push('spánek ' + csNum(w.sleep_hours, 1) + ' h');
+    if (reasons.length < 2 && w.resting_hr != null) reasons.push('klidová TF ' + w.resting_hr);
+    if (reasons.length < 2 && w.stress_avg != null) reasons.push('stres ' + w.stress_avg);
+    var verdict = isRide ? 'Vyjížďka' : 'Odpočinek';
+    return verdict + (reasons.length ? ' — ' + reasons.slice(0, 2).join(', ') + '.' : '.');
   }
 
   function renderBanner() {
@@ -467,7 +476,7 @@
     document.getElementById('banner').style.setProperty('--stripe', status.color);
     document.getElementById('scoreEl').innerHTML = (score != null ? score : '--') + '<small>/100</small>';
     document.getElementById('levelEl').textContent = w && w.training_readiness_level ? trLevel(w.training_readiness_level) + ' připravenost' : 'Zatím žádné měření';
-    document.getElementById('adviceEl').textContent = adviceForScore(score);
+    document.getElementById('adviceEl').textContent = readinessVerdict(w);
     document.getElementById('feedbackEl').textContent = w && w.training_readiness_feedback ? 'Garmin: ' + trFeedback(w.training_readiness_feedback) : '';
     document.getElementById('subtitle').textContent = w ? 'Poslední synchronizace ' + fmtDate(w.date) : 'Čekání na první synchronizaci';
 
