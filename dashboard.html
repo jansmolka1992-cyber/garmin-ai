@@ -269,6 +269,7 @@
   .log-field { display: flex; flex-direction: column; gap: 3px; }
   .log-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
   .log-hint { font-size: 12px; color: var(--text-muted); margin-top: -4px; }
+  .log-status { font-size: 12.5px; color: var(--warning); background: var(--warning-soft); padding: 8px 12px; border-radius: 8px; }
   .log-form select, .log-form input[type=date] {
     padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border);
     background: var(--surface-2); color: var(--text); font-family: inherit; font-size: 13.5px;
@@ -380,6 +381,7 @@
       </div>
       <div class="log-hint">Datum jde změnit i zpětně — klidně zapište událost z minulých dnů (např. nemoc, která začala včera).</div>
       <textarea id="logText" placeholder="např. Ráno bolí v krku, dnešní jízdu vynechávám"></textarea>
+      <div class="log-status" id="logStatus" hidden></div>
       <div class="entries" id="entries"></div>
     </div>
   </section>
@@ -407,7 +409,17 @@
     }
   };
 
-  var state = { wellness: Object.assign({}, INITIAL.wellness), activities: Object.assign({}, INITIAL.activities), notes: [] };
+  function loadLocalNotes() {
+    try {
+      var raw = localStorage.getItem('garmin_dashboard_notes');
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+  function saveLocalNotes() {
+    try { localStorage.setItem('garmin_dashboard_notes', JSON.stringify(state.notes)); } catch (e) { /* private mode etc — best effort only */ }
+  }
+
+  var state = { wellness: Object.assign({}, INITIAL.wellness), activities: Object.assign({}, INITIAL.activities), notes: loadLocalNotes() };
 
   function sortedDates(obj) { return Object.keys(obj).sort(); }
   function latestWellness() {
@@ -734,23 +746,43 @@
     db.collection('wellness').orderBy('date', 'desc').limit(60).onSnapshot(function (snap) {
       snap.docs.forEach(function (doc) { if (doc.exists) state.wellness[doc.id] = doc.data(); });
       renderAll();
-    });
+    }, function () { /* keep showing the last known wellness data */ });
     db.collection('activities').orderBy('date', 'desc').limit(30).onSnapshot(function (snap) {
       snap.docs.forEach(function (doc) { if (doc.exists) state.activities[doc.id] = doc.data(); });
       renderAll();
-    });
+    }, function () { /* keep showing the last known activities */ });
     db.collection('notes').orderBy('date', 'desc').limit(50).onSnapshot(function (snap) {
-      state.notes = snap.docs.filter(function(d){return d.exists;}).map(function (doc) {
+      var serverNotes = snap.docs.filter(function(d){return d.exists;}).map(function (doc) {
         var data = doc.data();
         if (!data.id) data.id = doc.id;
         return data;
       });
+      var serverIds = {};
+      serverNotes.forEach(function (n) { serverIds[n.id] = true; });
+      // Entries that only exist locally (a previous cloud write failed, or hadn't
+      // finished yet) — keep them visible and retry saving them now that we're connected.
+      var localOnly = state.notes.filter(function (n) { return n.id && !serverIds[n.id]; });
+      localOnly.forEach(function (n) {
+        dbRef.collection('notes').doc(n.id).set(n).catch(function () {});
+      });
+      state.notes = serverNotes.concat(localOnly);
+      saveLocalNotes();
       renderAll();
-    });
+    }, function () { /* subscription-level error: keep whatever is already loaded from localStorage */ });
   }).catch(function () {});
 
   // ---- log entry form (add + edit) ----
   var editingNoteId = null;
+  var logStatusTimer = null;
+  function showLogStatus(failed) {
+    var el = document.getElementById('logStatus');
+    if (!el) return;
+    el.textContent = failed
+      ? '⚠️ Nepodařilo se uložit do cloudu — záznam zůstává uložen jen v tomto prohlížeči a zkusí se uložit znovu při dalším načtení.'
+      : '';
+    el.hidden = !failed;
+    if (logStatusTimer) clearTimeout(logStatusTimer);
+  }
 
   function exitEditMode() {
     editingNoteId = null;
@@ -776,16 +808,23 @@
         updatedAt: new Date().toISOString()
       };
       if (idx !== -1) state.notes[idx] = entry; else state.notes.push(entry);
-      if (dbRef) dbRef.collection('notes').doc(editingNoteId).set(entry).catch(function () {});
+      saveLocalNotes();
+      renderAll();
+      if (dbRef) dbRef.collection('notes').doc(editingNoteId).set(entry).catch(function () { showLogStatus(true); });
       exitEditMode();
     } else {
       var id = dbRef ? dbRef.collection('notes').doc().id : 'local-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
       var newEntry = { id: id, date: date, type: type, text: text, createdAt: new Date().toISOString() };
       state.notes.push(newEntry);
-      if (dbRef) dbRef.collection('notes').doc(id).set(newEntry).catch(function () {});
+      saveLocalNotes();
+      renderAll();
+      if (dbRef) {
+        dbRef.collection('notes').doc(id).set(newEntry).catch(function () { showLogStatus(true); });
+      } else {
+        showLogStatus(true);
+      }
       document.getElementById('logText').value = '';
     }
-    renderAll();
   });
 
   document.getElementById('logCancelBtn').addEventListener('click', exitEditMode);
