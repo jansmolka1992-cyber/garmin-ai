@@ -327,7 +327,7 @@
   </section>
 
   <section>
-    <h2>Plán na další dny</h2>
+    <h2>Plán na dnešek a další dny</h2>
     <div class="card" id="planBox">
       <div class="plan-list" id="planList"><div class="empty" style="padding:16px 18px;">Přemýšlím…</div></div>
       <div class="summary-actions" style="padding: 14px 18px;">
@@ -942,11 +942,11 @@
 
   function nextDates(n) {
     var out = [];
-    for (var i = 1; i <= n; i++) {
+    for (var i = 0; i < n; i++) {
       var d = new Date();
       d.setDate(d.getDate() + i);
       var iso = d.toISOString().slice(0, 10);
-      var dayName = d.toLocaleDateString('cs-CZ', { weekday: 'short' });
+      var dayName = i === 0 ? 'Dnes' : d.toLocaleDateString('cs-CZ', { weekday: 'short' });
       dayName = dayName.charAt(0).toUpperCase() + dayName.slice(1);
       out.push({ date: iso, dayName: dayName });
     }
@@ -991,10 +991,10 @@
       return;
     }
     el.innerHTML = '<div class="empty" style="padding:16px 18px;">Přemýšlím…</div>';
-    var days = nextDates(5);
+    var days = nextDates(6);
     var dayList = days.map(function (d) { return d.date + ' (' + d.dayName + ')'; }).join(', ');
-    var prompt = "You are a cycling coach planning the next few days for an endurance gravel cyclist who also does occasional gym strength sessions, using a Garmin Edge (bike computer) and a Fenix 8 (watch). " +
-      "Using the rider's recent training load, recovery trend, and any logged notes below, plan exactly these dates: " + dayList + ". " +
+    var prompt = "You are a cycling coach planning training for today and the next few days for an endurance gravel cyclist who also does occasional gym strength sessions, using a Garmin Edge (bike computer) and a Fenix 8 (watch). " +
+      "Using the rider's recent training load, recovery trend, and any logged notes below, plan exactly these dates: " + dayList + " — the first date is today; if the 'Recent rides' data below already shows a completed activity for today, plan today's entry as recovery/stretching guidance for the rest of the day instead of another hard session. " +
       "For each date pick ONE main session: an easy/endurance ride, an interval/speed ride, a gym strength session, or full rest — mix in rest and gym days where recovery data calls for it, don't default to a ride every day. " +
       "Also include stretching/mobility work on most days as a separate short suggestion — it does not need its own day, it can ride alongside a training day (e.g. post-ride stretch) or be the focus of a rest day (e.g. a longer mobility session); leave it null only on rare days it truly doesn't fit. " +
       "For each day also break the main session into a short list of structured steps the rider could enter as a Garmin Connect workout (warm-up / main set or intervals / cooldown for rides; exercises with sets x reps for gym; a short routine for a stretch-focused rest day) — 3 to 6 steps, each with a duration (time, distance, or reps) and a target (heart rate zone, power/RPE, cadence, or 'easy'/'moderate' effort as appropriate). " +
