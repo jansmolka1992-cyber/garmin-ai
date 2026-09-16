@@ -100,17 +100,17 @@
     },
     "2026-09-11": {
       "date": "2026-09-11",
-      "resting_hr": 53,
-      "steps": 543,
-      "stress_avg": 34,
+      "resting_hr": 51,
+      "steps": 1615,
+      "stress_avg": 41,
       "sleep_hours": 6.3,
       "sleep_score": 61,
       "hrv_overnight": 39,
       "body_battery_start": 13,
-      "body_battery_end": 37,
-      "training_readiness": 50,
-      "training_readiness_level": "MODERATE",
-      "training_readiness_feedback": "BOOSTED_BY_NAPPING"
+      "body_battery_end": 5,
+      "training_readiness": 42,
+      "training_readiness_level": "LOW",
+      "training_readiness_feedback": "IMPROVED_BY_NAPPING"
     },
     "2026-09-10": {
       "date": "2026-09-10",
@@ -125,6 +125,34 @@
       "training_readiness": 50,
       "training_readiness_level": "MODERATE",
       "training_readiness_feedback": "LISTEN_TO_YOUR_BODY"
+    },
+    "2026-09-12": {
+      "date": "2026-09-12",
+      "resting_hr": 54,
+      "steps": 2598,
+      "stress_avg": 39,
+      "sleep_hours": 5.7,
+      "sleep_score": 50,
+      "hrv_overnight": 39,
+      "body_battery_start": 5,
+      "body_battery_end": 5,
+      "training_readiness": 6,
+      "training_readiness_level": "POOR",
+      "training_readiness_feedback": "TIME_TO_RECHARGE"
+    },
+    "2026-09-13": {
+      "date": "2026-09-13",
+      "resting_hr": 52,
+      "steps": 539,
+      "stress_avg": 27,
+      "sleep_hours": 7.1,
+      "sleep_score": 82,
+      "hrv_overnight": 42,
+      "body_battery_start": 5,
+      "body_battery_end": 34,
+      "training_readiness": 52,
+      "training_readiness_level": "MODERATE",
+      "training_readiness_feedback": "GOOD_SLEEP_LAST_NIGHT"
     }
   },
   "activities": {
@@ -228,6 +256,40 @@
         69.9,
         66.8,
         4.8
+      ]
+    },
+    "24323588522": {
+      "id": 24323588522,
+      "name": "Prague Gravel/Unpaved Cycling",
+      "type": "gravel_cycling",
+      "date": "2026-09-11",
+      "start_time": "2026-09-11 14:29:07",
+      "duration_min": 190.2,
+      "distance_km": 80.07,
+      "avg_hr": 132.0,
+      "max_hr": 171.0,
+      "calories": 2028.0,
+      "avg_pace_min_per_km": null,
+      "elevation_gain_m": 848.0,
+      "elevation_loss_m": 902.0,
+      "min_elevation_m": 188.1999969482422,
+      "max_elevation_m": 376.0,
+      "avg_speed_kmh": 25.3,
+      "max_speed_kmh": 58.1,
+      "avg_cadence_rpm": 74.0,
+      "aerobic_training_effect": 4.4,
+      "anaerobic_training_effect": 2.0,
+      "training_effect_label": "AEROBIC_BASE",
+      "training_load": 196,
+      "location_name": "Prague",
+      "min_temp_c": 18.0,
+      "max_temp_c": 27.0,
+      "hr_zone_minutes": [
+        4.5,
+        39.7,
+        35.3,
+        35.8,
+        74.8
       ]
     }
   }
