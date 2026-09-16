@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import base64
+import contextlib
 import getpass
 import io
 import json
@@ -99,6 +100,12 @@ def get_client():
             f"Saved login didn't work ({e}).\n"
             "It may have expired. Run: python sync_garmin.py --login"
         )
+    # A loaded token that's near expiry gets silently refreshed (and Garmin
+    # rotates the refresh token when that happens) without the library
+    # persisting it back to TOKEN_DIR on this code path. Always re-dump so a
+    # rotated token doesn't get discarded and brick the next run.
+    with contextlib.suppress(Exception):
+        garmin.client.dump(TOKEN_DIR)
     return garmin
 
 
