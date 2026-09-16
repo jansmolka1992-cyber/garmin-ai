@@ -153,6 +153,48 @@
       "training_readiness": 52,
       "training_readiness_level": "MODERATE",
       "training_readiness_feedback": "GOOD_SLEEP_LAST_NIGHT"
+    },
+    "2026-09-16": {
+      "date": "2026-09-16",
+      "resting_hr": 42,
+      "steps": 1233,
+      "stress_avg": 11,
+      "sleep_hours": 6.1,
+      "sleep_score": 82,
+      "hrv_overnight": 87,
+      "body_battery_start": 46,
+      "body_battery_end": 87,
+      "training_readiness": 85,
+      "training_readiness_level": "HIGH",
+      "training_readiness_feedback": "EXCELLENT_RECOVERY"
+    },
+    "2026-09-15": {
+      "date": "2026-09-15",
+      "resting_hr": 53,
+      "steps": 4445,
+      "stress_avg": 32,
+      "sleep_hours": null,
+      "sleep_score": null,
+      "hrv_overnight": 45,
+      "body_battery_start": 10,
+      "body_battery_end": 41,
+      "training_readiness": 72,
+      "training_readiness_level": "MODERATE",
+      "training_readiness_feedback": "GOOD_SLEEP_HISTORY"
+    },
+    "2026-09-14": {
+      "date": "2026-09-14",
+      "resting_hr": 55,
+      "steps": 1979,
+      "stress_avg": 63,
+      "sleep_hours": null,
+      "sleep_score": null,
+      "hrv_overnight": null,
+      "body_battery_start": 66,
+      "body_battery_end": 10,
+      "training_readiness": 69,
+      "training_readiness_level": "MODERATE",
+      "training_readiness_feedback": "GOOD_SLEEP_HISTORY"
     }
   },
   "activities": {
