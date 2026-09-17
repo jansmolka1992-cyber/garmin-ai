@@ -157,13 +157,13 @@
     "2026-09-16": {
       "date": "2026-09-16",
       "resting_hr": 42,
-      "steps": 1233,
+      "steps": 3076,
       "stress_avg": 11,
       "sleep_hours": 6.1,
       "sleep_score": 82,
       "hrv_overnight": 87,
       "body_battery_start": 46,
-      "body_battery_end": 87,
+      "body_battery_end": 55,
       "training_readiness": 85,
       "training_readiness_level": "HIGH",
       "training_readiness_feedback": "EXCELLENT_RECOVERY"
@@ -195,6 +195,20 @@
       "training_readiness": 69,
       "training_readiness_level": "MODERATE",
       "training_readiness_feedback": "GOOD_SLEEP_HISTORY"
+    },
+    "2026-09-17": {
+      "date": "2026-09-17",
+      "resting_hr": 39,
+      "steps": 95,
+      "stress_avg": 8,
+      "sleep_hours": 6.6,
+      "sleep_score": 82,
+      "hrv_overnight": 93,
+      "body_battery_start": 53,
+      "body_battery_end": 100,
+      "training_readiness": 93,
+      "training_readiness_level": "HIGH",
+      "training_readiness_feedback": "EXCELLENT_RECOVERY"
     }
   },
   "activities": {
